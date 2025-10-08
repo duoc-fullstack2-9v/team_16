@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Modelo de usuarios del sistema
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       String   // Comandante, Capitán, Teniente, Sargento, Bombero
+  tipo      String   @default("usuario") // 'admin' o 'usuario'
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  bomberosCreados Bombero[] @relation("BomberoCreatedBy")
+  oficialesCreados Oficial[] @relation("OficialCreatedBy")
+  citacionesCreadas Citacion[] @relation("CitacionCreatedBy")
+  citacionesBombero BomberoCitacion[]
+
+  @@map("users")
+}
+
+// Modelo de bomberos
+model Bombero {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  rango       String   // Bombero, Cabo, Sargento, etc.
+  especialidad String?
+  estado      String   @default("Activo") // Activo, Licencia, Inactivo
+  telefono    String?
+  email       String?
+  direccion   String?
+  fechaIngreso DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById Int?
+
+  // Relaciones
+  createdBy   User? @relation("BomberoCreatedBy", fields: [createdById], references: [id])
+  citaciones  BomberoCitacion[]
+
+  @@map("bomberos")
+}
+
+// Modelo de oficiales con jerarquía y especialidades
+model Oficial {
+  id                Int       @id @default(autoincrement())
+  nombres           String
+  apellidos         String
+  rut               String    @unique
+  rango             String    // Comandante, Capitán, Teniente, Sargento, etc.
+  cargo             String?   // Director, Subdirector, Jefe de Compañía, etc.
+  especialidades    String?   // JSON array: ["Rescate", "MATPEL", "Primeros Auxilios"]
+  departamento      String?   // Operaciones, Administración, Capacitación, etc.
+  telefono          String?
+  email             String?   @unique
+  fechaIngreso      DateTime?
+  fechaNacimiento   DateTime?
+  direccion         String?
+  estadoCivil       String?
+  nivelEducacion    String?
+  certificaciones   String?   // JSON array de certificaciones
+  experienciaAnios  Int?      // Años de experiencia
+  activo            Boolean   @default(true)
+  observaciones     String?
+  fotoUrl           String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdById       Int?
+
+  // Relaciones jerárquicas
+  superiornId       Int?      // ID del oficial superior directo
+  superior          Oficial?  @relation("JerarquiaOficiales", fields: [superiornId], references: [id])
+  subordinados      Oficial[] @relation("JerarquiaOficiales")
+
+  // Relación con usuario del sistema
+  createdBy         User?     @relation("OficialCreatedBy", fields: [createdById], references: [id])
+
+  @@map("oficiales")
+}
+
+// Modelo de citaciones
+model Citacion {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  fecha       DateTime
+  hora        String
+  lugar       String
+  motivo      String
+  estado      String   @default("Programada") // Programada, Realizada, Cancelada
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById Int?
+
+  // Relaciones
+  createdBy   User? @relation("CitacionCreatedBy", fields: [createdById], references: [id])
+  bomberos    BomberoCitacion[]
+
+  @@map("citaciones")
+}
+
+// Tabla intermedia para la relación many-to-many entre Bomberos y Citaciones
+model BomberoCitacion {
+  id         Int     @id @default(autoincrement())
+  bomberoId  Int
+  citacionId Int
+  asistio    Boolean @default(false)
+  observaciones String?
+  createdAt  DateTime @default(now())
+
+  // Relaciones
+  bombero    Bombero  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  citacion   Citacion @relation(fields: [citacionId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     Int?
+
+  @@unique([bomberoId, citacionId])
+  @@map("bomberos_citaciones")
+}
+
+// Modelo para solicitudes/permisos
+model Solicitud {
+  id          Int      @id @default(autoincrement())
+  tipo        String   // Permiso, Licencia, Cambio de horario, etc.
+  descripcion String
+  estado      String   @default("Pendiente") // Pendiente, Aprobada, Rechazada
+  fechaSolicitud DateTime @default(now())
+  fechaRespuesta DateTime?
+  observaciones String?
+  solicitanteId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("solicitudes")
+}
+
+// Modelo para eventos/actividades
+model Evento {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  fecha       DateTime
+  lugar       String?
+  tipo        String   // Entrenamiento, Evento social, Ceremonia, etc.
+  estado      String   @default("Programado")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("eventos")
+}
+
+// Modelo para el historial de acciones/logs
+model Log {
+  id        Int      @id @default(autoincrement())
+  accion    String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  tabla     String?  // bomberos, citaciones, usuarios, etc.
+  registroId Int?    // ID del registro afectado
+  usuarioId Int?
+  detalles  String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("logs")
+}
