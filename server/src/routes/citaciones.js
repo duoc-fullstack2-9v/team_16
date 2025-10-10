@@ -6,7 +6,7 @@ import { authenticateToken } from '../middleware/auth.js'
 const router = express.Router()
 const prisma = new PrismaClient()
 
-// Schema de validación para citaciones
+// Schema de validación para citaciones (CREATE)
 const citacionSchema = Joi.object({
   titulo: Joi.string().min(3).max(200).required().messages({
     'string.base': 'El título debe ser un texto',
@@ -14,9 +14,8 @@ const citacionSchema = Joi.object({
     'string.max': 'El título no puede exceder 200 caracteres',
     'any.required': 'El título es requerido'
   }),
-  fecha: Joi.date().iso().min('now').required().messages({
+  fecha: Joi.date().iso().required().messages({
     'date.base': 'La fecha debe ser una fecha válida',
-    'date.min': 'La fecha no puede ser en el pasado',
     'any.required': 'La fecha es requerida'
   }),
   hora: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).required().messages({
@@ -43,6 +42,41 @@ const citacionSchema = Joi.object({
     'number.base': 'Cada ID de bombero debe ser un número',
     'number.positive': 'Los IDs deben ser números positivos'
   })
+})
+
+// Schema de validación para actualización (UPDATE - campos opcionales)
+const citacionUpdateSchema = Joi.object({
+  titulo: Joi.string().min(3).max(200).optional().messages({
+    'string.base': 'El título debe ser un texto',
+    'string.min': 'El título debe tener al menos 3 caracteres',
+    'string.max': 'El título no puede exceder 200 caracteres'
+  }),
+  fecha: Joi.date().iso().optional().messages({
+    'date.base': 'La fecha debe ser una fecha válida'
+  }),
+  hora: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).optional().messages({
+    'string.pattern.base': 'La hora debe tener formato HH:MM (ej: 19:00)'
+  }),
+  lugar: Joi.string().min(3).max(300).optional().messages({
+    'string.base': 'El lugar debe ser un texto',
+    'string.min': 'El lugar debe tener al menos 3 caracteres',
+    'string.max': 'El lugar no puede exceder 300 caracteres'
+  }),
+  motivo: Joi.string().min(10).max(1000).optional().messages({
+    'string.base': 'El motivo debe ser un texto',
+    'string.min': 'El motivo debe tener al menos 10 caracteres',
+    'string.max': 'El motivo no puede exceder 1000 caracteres'
+  }),
+  estado: Joi.string().valid('Programada', 'Realizada', 'Cancelada').optional().messages({
+    'any.only': 'El estado debe ser: Programada, Realizada o Cancelada'
+  }),
+  bomberos: Joi.array().items(Joi.number().integer().positive()).optional().messages({
+    'array.base': 'Los bomberos deben ser un array de IDs',
+    'number.base': 'Cada ID de bombero debe ser un número',
+    'number.positive': 'Los IDs deben ser números positivos'
+  })
+}).min(1).messages({
+  'object.min': 'Debe proporcionar al menos un campo para actualizar'
 })
 
 // Schema para asignación de bomberos
@@ -84,24 +118,46 @@ router.get('/', authenticateToken, async (req, res) => {
     const skip = (pageNumber - 1) * limitNumber
 
     // Construir filtros
-    const filters = {
-      AND: [
-        estado ? { estado } : {},
-        search ? {
-          OR: [
-            { titulo: { contains: search, mode: 'insensitive' } },
-            { lugar: { contains: search, mode: 'insensitive' } },
-            { motivo: { contains: search, mode: 'insensitive' } }
-          ]
-        } : {},
-        fechaDesde && fechaHasta ? {
-          fecha: {
-            gte: new Date(fechaDesde),
-            lte: new Date(fechaHasta)
-          }
-        } : {}
-      ]
+    const filterConditions = []
+    
+    if (estado) {
+      filterConditions.push({ estado })
     }
+    
+    if (search) {
+      filterConditions.push({
+        OR: [
+          { titulo: { contains: search, mode: 'insensitive' } },
+          { lugar: { contains: search, mode: 'insensitive' } },
+          { motivo: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    }
+    
+    if (fechaDesde && fechaHasta) {
+      filterConditions.push({
+        fecha: {
+          gte: new Date(fechaDesde),
+          lte: new Date(fechaHasta)
+        }
+      })
+    }
+    
+    const filters = filterConditions.length > 0 ? { AND: filterConditions } : {}
+
+    // Actualizar automáticamente citaciones pasadas que siguen como "Programada"
+    const now = new Date()
+    await prisma.citacion.updateMany({
+      where: {
+        estado: 'Programada',
+        fecha: {
+          lt: now
+        }
+      },
+      data: {
+        estado: 'Realizada'
+      }
+    })
 
     // Obtener citaciones con paginación
     const [citaciones, total] = await Promise.all([
@@ -304,8 +360,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
       })
     }
 
-    // Validar datos de entrada
-    const { error, value } = citacionSchema.validate(req.body)
+    // Validar datos de entrada con schema de actualización (campos opcionales)
+    const { error, value } = citacionUpdateSchema.validate(req.body)
     if (error) {
       return res.status(400).json({
         success: false,

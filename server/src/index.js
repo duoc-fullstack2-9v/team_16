@@ -4,6 +4,8 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // Importar rutas
 import authRoutes from './routes/auth.js'
@@ -14,6 +16,10 @@ import adminRoutes from './routes/admin.js'
 
 // Configurar variables de entorno
 dotenv.config()
+
+// Para ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -60,6 +66,9 @@ if (process.env.NODE_ENV === 'development') {
 // Parsing
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Servir archivos estáticos (imágenes de bomberos)
+app.use('/assets', express.static(path.join(__dirname, '../../assets')))
 
 // ========================================
 // RUTAS
