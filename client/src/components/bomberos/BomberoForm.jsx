@@ -16,7 +16,8 @@ import {
   IconButton,
   Typography,
   Divider,
-  InputAdornment
+  InputAdornment,
+  Avatar
 } from '@mui/material'
 import {
   Save as SaveIcon,
@@ -26,7 +27,8 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   Home as HomeIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  PhotoCamera as PhotoCameraIcon
 } from '@mui/icons-material'
 import { useDispatch, useSelector } from 'react-redux'
 import { createBombero, updateBombero, clearError } from '../../store/slices/bomberosSlice'
@@ -41,14 +43,16 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
 
   // Form state
   const [formData, setFormData] = useState({
-    nombre: '',
+    nombres: '',
+    apellidos: '',
     rango: 'Bombero',
     especialidad: '',
     estado: 'Activo',
     telefono: '',
     email: '',
     direccion: '',
-    fechaIngreso: null
+    fechaIngreso: null,
+    fotoUrl: ''
   })
 
   // Validation errors
@@ -58,14 +62,16 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
   useEffect(() => {
     if (isEditing && bombero) {
       setFormData({
-        nombre: bombero.nombre || '',
+        nombres: bombero.nombres || '',
+        apellidos: bombero.apellidos || '',
         rango: bombero.rango || 'Bombero',
         especialidad: bombero.especialidad || '',
         estado: bombero.estado || 'Activo',
         telefono: bombero.telefono || '',
         email: bombero.email || '',
         direccion: bombero.direccion || '',
-        fechaIngreso: bombero.fechaIngreso ? new Date(bombero.fechaIngreso) : null
+        fechaIngreso: bombero.fechaIngreso ? new Date(bombero.fechaIngreso) : null,
+        fotoUrl: bombero.fotoUrl || ''
       })
     }
   }, [isEditing, bombero])
@@ -99,10 +105,16 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
     const errors = {}
 
     // Required fields
-    if (!formData.nombre.trim()) {
-      errors.nombre = 'El nombre es requerido'
-    } else if (formData.nombre.length < 2) {
-      errors.nombre = 'El nombre debe tener al menos 2 caracteres'
+    if (!formData.nombres.trim()) {
+      errors.nombres = 'Los nombres son requeridos'
+    } else if (formData.nombres.length < 2) {
+      errors.nombres = 'Los nombres deben tener al menos 2 caracteres'
+    }
+
+    if (!formData.apellidos.trim()) {
+      errors.apellidos = 'Los apellidos son requeridos'
+    } else if (formData.apellidos.length < 2) {
+      errors.apellidos = 'Los apellidos deben tener al menos 2 caracteres'
     }
 
     if (!formData.rango) {
@@ -214,14 +226,73 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
                 </Typography>
               </Grid>
 
+              {/* Foto del bombero */}
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Avatar
+                    src={formData.fotoUrl}
+                    sx={{ 
+                      width: 120, 
+                      height: 120, 
+                      mb: 2,
+                      mx: 'auto',
+                      border: '3px solid',
+                      borderColor: 'primary.main'
+                    }}
+                  >
+                    {!formData.fotoUrl && (formData.nombres?.charAt(0) || formData.apellidos?.charAt(0) || 'B')}
+                  </Avatar>
+                  <Typography variant="caption" display="block" gutterBottom>
+                    Selecciona una foto
+                  </Typography>
+                  <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap" sx={{ mt: 1 }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                      <IconButton
+                        key={num}
+                        onClick={() => setFormData(prev => ({ ...prev, fotoUrl: `/assets/bomberos/bombero-${num}.jpg` }))}
+                        sx={{
+                          border: formData.fotoUrl === `/assets/bomberos/bombero-${num}.jpg` ? '2px solid' : '1px solid',
+                          borderColor: formData.fotoUrl === `/assets/bomberos/bombero-${num}.jpg` ? 'primary.main' : 'grey.300',
+                          p: 0.5
+                        }}
+                      >
+                        <Avatar
+                          src={`/assets/bomberos/bombero-${num}.jpg`}
+                          sx={{ width: 40, height: 40 }}
+                        />
+                      </IconButton>
+                    ))}
+                  </Stack>
+                </Box>
+              </Grid>
+
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Nombre completo"
-                  value={formData.nombre}
-                  onChange={handleChange('nombre')}
-                  error={!!validationErrors.nombre}
-                  helperText={validationErrors.nombre}
+                  label="Nombres"
+                  value={formData.nombres}
+                  onChange={handleChange('nombres')}
+                  error={!!validationErrors.nombres}
+                  helperText={validationErrors.nombres}
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Apellidos"
+                  value={formData.apellidos}
+                  onChange={handleChange('apellidos')}
+                  error={!!validationErrors.apellidos}
+                  helperText={validationErrors.apellidos}
                   required
                   InputProps={{
                     startAdornment: (

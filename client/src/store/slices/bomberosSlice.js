@@ -14,7 +14,7 @@ export const fetchBomberos = createAsyncThunk(
         search: params.search || '',
         rango: params.rango || '',
         estado: params.estado || 'Activo',
-        sortBy: params.sortBy || 'nombre',
+        sortBy: params.sortBy || 'apellidos',
         sortOrder: params.sortOrder || 'asc'
       }).toString()
 
@@ -148,7 +148,7 @@ const initialState = {
     search: '',
     rango: '',
     estado: 'Activo',
-    sortBy: 'nombre',
+    sortBy: 'apellidos',
     sortOrder: 'asc'
   }
 }

@@ -175,9 +175,11 @@ router.get('/', authenticateToken, async (req, res) => {
               bombero: {
                 select: {
                   id: true,
-                  nombre: true,
+                  nombres: true,
+                  apellidos: true,
                   rango: true,
-                  estado: true
+                  estado: true,
+                  fotoUrl: true
                 }
               }
             }
@@ -234,12 +236,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
             bombero: {
               select: {
                 id: true,
-                nombre: true,
+                nombres: true,
+                apellidos: true,
                 rango: true,
                 especialidad: true,
                 telefono: true,
                 email: true,
-                estado: true
+                estado: true,
+                fotoUrl: true
               }
             }
           },
@@ -325,7 +329,7 @@ router.post('/', authenticateToken, async (req, res) => {
           bomberos: {
             include: {
               bombero: {
-                select: { id: true, nombre: true, rango: true }
+                select: { id: true, nombres: true, apellidos: true, rango: true, fotoUrl: true }
               }
             }
           }
@@ -437,7 +441,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
           bomberos: {
             include: {
               bombero: {
-                select: { id: true, nombre: true, rango: true }
+                select: { id: true, nombres: true, apellidos: true, rango: true, fotoUrl: true }
               }
             }
           }
@@ -589,7 +593,7 @@ router.post('/:id/asignar', authenticateToken, async (req, res) => {
           bomberos: {
             include: {
               bombero: {
-                select: { id: true, nombre: true, rango: true }
+                select: { id: true, nombres: true, apellidos: true, rango: true, fotoUrl: true }
               }
             }
           }
@@ -656,7 +660,7 @@ router.put('/:citacionId/bomberos/:bomberoId/asistencia', authenticateToken, asy
       data: value,
       include: {
         bombero: {
-          select: { id: true, nombre: true, rango: true }
+          select: { id: true, nombres: true, apellidos: true, rango: true, fotoUrl: true }
         },
         citacion: {
           select: { id: true, titulo: true, fecha: true }

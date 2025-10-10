@@ -19,9 +19,18 @@ export const fetchCitaciones = createAsyncThunk(
         sortOrder: params.sortOrder || 'desc'
       }).toString()
 
+      console.log('🔍 Fetching citaciones with URL:', `/citaciones?${queryParams}`)
       const response = await api.get(`/citaciones?${queryParams}`)
-      return response.data.data
+      console.log('✅ Response data:', response.data)
+      console.log('✅ Citaciones array:', response.data.data)
+      console.log('✅ Pagination:', response.data.pagination)
+      // Retornar el objeto completo con data y pagination
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination
+      }
     } catch (error) {
+      console.error('❌ Error fetching citaciones:', error)
       return rejectWithValue(
         error.response?.data?.message || 'Error al cargar citaciones'
       )

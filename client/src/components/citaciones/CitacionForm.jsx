@@ -16,6 +16,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material'
+import { format } from 'date-fns'
 
 const CitacionForm = ({
   open,
@@ -31,7 +32,7 @@ const CitacionForm = ({
     hora: '',
     lugar: '',
     motivo: '',
-    estado: 'programada'
+    estado: 'Programada'
   })
 
   const [formErrors, setFormErrors] = useState({})
@@ -40,24 +41,31 @@ const CitacionForm = ({
   useEffect(() => {
     if (open) {
       if (citacion) {
-        // Modo edición
+        // Modo edición - formatear fecha y hora correctamente
+        const fechaStr = citacion.fecha ? format(new Date(citacion.fecha), 'yyyy-MM-dd') : ''
+        const horaStr = citacion.hora ? citacion.hora.substring(0, 5) : '' // HH:mm
+        
         setFormData({
           titulo: citacion.titulo || '',
-          fecha: citacion.fecha ? new Date(citacion.fecha) : new Date(),
-          hora: citacion.hora ? new Date(`1970-01-01T${citacion.hora}`) : new Date(),
+          fecha: fechaStr,
+          hora: horaStr,
           lugar: citacion.lugar || '',
           motivo: citacion.motivo || '',
-          estado: citacion.estado || 'programada'
+          estado: citacion.estado || 'Programada'
         })
       } else {
-        // Modo creación
+        // Modo creación - usar fecha y hora actual
+        const now = new Date()
+        const fechaStr = format(now, 'yyyy-MM-dd')
+        const horaStr = format(now, 'HH:mm')
+        
         setFormData({
           titulo: '',
-          fecha: new Date(),
-          hora: new Date(),
+          fecha: fechaStr,
+          hora: horaStr,
           lugar: '',
           motivo: '',
-          estado: 'programada'
+          estado: 'Programada'
         })
       }
       setFormErrors({})
@@ -85,6 +93,8 @@ const CitacionForm = ({
 
     if (!formData.titulo.trim()) {
       errors.titulo = 'El título es requerido'
+    } else if (formData.titulo.trim().length < 3) {
+      errors.titulo = 'El título debe tener al menos 3 caracteres'
     }
 
     if (!formData.fecha) {
@@ -97,6 +107,14 @@ const CitacionForm = ({
 
     if (!formData.lugar.trim()) {
       errors.lugar = 'El lugar es requerido'
+    } else if (formData.lugar.trim().length < 3) {
+      errors.lugar = 'El lugar debe tener al menos 3 caracteres'
+    }
+
+    if (!formData.motivo.trim()) {
+      errors.motivo = 'El motivo es requerido'
+    } else if (formData.motivo.trim().length < 10) {
+      errors.motivo = 'El motivo debe tener al menos 10 caracteres'
     }
 
     setFormErrors(errors)
@@ -113,8 +131,8 @@ const CitacionForm = ({
     // Formatear datos para envío
     const submitData = {
       titulo: formData.titulo.trim(),
-      fecha: format(formData.fecha, 'yyyy-MM-dd'),
-      hora: format(formData.hora, 'HH:mm:ss'),
+      fecha: formData.fecha, // Ya está en formato yyyy-MM-dd
+      hora: formData.hora,   // Ya está en formato HH:mm
       lugar: formData.lugar.trim(),
       motivo: formData.motivo.trim(),
       estado: formData.estado
@@ -130,7 +148,7 @@ const CitacionForm = ({
   }
 
   const isEditing = Boolean(citacion)
-  const canEditEstado = isEditing && citacion?.estado !== 'realizada'
+  const canEditEstado = isEditing && citacion?.estado !== 'Realizada'
 
   return (
     <Dialog 
@@ -231,9 +249,9 @@ const CitacionForm = ({
                     label="Estado"
                     disabled={loading || !canEditEstado}
                   >
-                    <MenuItem value="programada">Programada</MenuItem>
-                    <MenuItem value="realizada">Realizada</MenuItem>
-                    <MenuItem value="cancelada">Cancelada</MenuItem>
+                    <MenuItem value="Programada">Programada</MenuItem>
+                    <MenuItem value="Realizada">Realizada</MenuItem>
+                    <MenuItem value="Cancelada">Cancelada</MenuItem>
                   </Select>
                 </FormControl>
                 {!canEditEstado && (

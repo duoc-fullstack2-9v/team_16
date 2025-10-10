@@ -22,7 +22,8 @@ import {
   Event,
   Schedule,
   LocationOn,
-  Assignment
+  Assignment,
+  Cancel
 } from '@mui/icons-material'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -33,19 +34,22 @@ const CitacionCard = ({
   onEdit,
   onDelete,
   onAssign,
+  onCancel,
   loading = false
 }) => {
   const getEstadoColor = (estado) => {
-    switch (estado) {
-      case 'programada': return 'primary'
-      case 'realizada': return 'success'
-      case 'cancelada': return 'error'
+    const estadoLower = estado?.toLowerCase()
+    switch (estadoLower) {
+      case 'programada': return 'info'        // Celeste
+      case 'realizada': return 'success'      // Verde
+      case 'cancelada': return 'warning'      // Naranja
       default: return 'default'
     }
   }
 
   const getEstadoLabel = (estado) => {
-    switch (estado) {
+    const estadoLower = estado?.toLowerCase()
+    switch (estadoLower) {
       case 'programada': return 'Programada'
       case 'realizada': return 'Realizada'
       case 'cancelada': return 'Cancelada'
@@ -189,10 +193,15 @@ const CitacionCard = ({
                   {bomberosAsignados.map((bc) => (
                     <Tooltip 
                       key={bc?.bombero?.id || Math.random()}
-                      title={`${bc?.bombero?.nombres || ''} ${bc?.bombero?.apellidos || ''}`}
+                      title={`${bc?.bombero?.nombres || ''} ${bc?.bombero?.apellidos || ''} - ${bc?.bombero?.rango || ''}`}
                     >
-                      <Avatar>
-                        {bc?.bombero?.nombres?.charAt(0) || '?'}{bc?.bombero?.apellidos?.charAt(0) || ''}
+                      <Avatar src={bc?.bombero?.fotoUrl || ''}>
+                        {!bc?.bombero?.fotoUrl && (
+                          <>
+                            {bc?.bombero?.nombres?.charAt(0) || '?'}
+                            {bc?.bombero?.apellidos?.charAt(0) || ''}
+                          </>
+                        )}
                       </Avatar>
                     </Tooltip>
                   ))}
@@ -234,7 +243,7 @@ const CitacionCard = ({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Asignar bomberos">
+          <Tooltip title="Ver y asignar bomberos">
             <IconButton 
               size="small" 
               onClick={() => onAssign(citacion)}
@@ -245,7 +254,20 @@ const CitacionCard = ({
             </IconButton>
           </Tooltip>
 
-          {citacion?.estado !== 'realizada' && (
+          {citacion?.estado === 'Programada' && (
+            <Tooltip title="Cancelar citación">
+              <IconButton 
+                size="small" 
+                onClick={() => onCancel(citacion)}
+                disabled={loading}
+                color="warning"
+              >
+                <Cancel fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {citacion?.estado !== 'realizada' && citacion?.estado !== 'Realizada' && (
             <Tooltip title="Editar">
               <IconButton 
                 size="small" 
@@ -259,7 +281,7 @@ const CitacionCard = ({
           )}
         </Box>
 
-        {citacion?.estado !== 'realizada' && (
+        {citacion?.estado !== 'realizada' && citacion?.estado !== 'Realizada' && (
           <Tooltip title="Eliminar">
             <IconButton 
               size="small" 

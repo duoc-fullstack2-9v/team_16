@@ -4,8 +4,7 @@ import {
   Typography, 
   Grid, 
   Card, 
-  CardContent,
-  Alert
+  CardContent
 } from '@mui/material'
 
 const DashboardPage = () => {
@@ -14,13 +13,6 @@ const DashboardPage = () => {
       <Typography variant="h4" gutterBottom>
         📊 Dashboard Principal
       </Typography>
-      
-      <Alert severity="success" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          <strong>¡Fase 1 completada exitosamente!</strong><br/>
-          El sistema base está configurado. Este dashboard será desarrollado en la Fase 3.
-        </Typography>
-      </Alert>
       
       <Grid container spacing={3}>
         <Grid item xs={12} md={6} lg={3}>

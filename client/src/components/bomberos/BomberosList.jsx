@@ -88,7 +88,7 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
 
   // Handle delete
   const handleDelete = async (bombero) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar a ${bombero.nombre}?`)) {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar a ${bombero.nombres} ${bombero.apellidos}?`)) {
       try {
         await dispatch(deleteBombero(bombero.id)).unwrap()
         // Refetch to update the list
@@ -290,12 +290,20 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
                   {/* Header con avatar y acciones */}
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                     <Box display="flex" alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                        {bombero.nombre.charAt(0)}
+                      <Avatar 
+                        src={bombero.fotoUrl || ''}
+                        sx={{ 
+                          bgcolor: 'primary.main', 
+                          mr: 2,
+                          width: 56,
+                          height: 56
+                        }}
+                      >
+                        {!bombero.fotoUrl && ((bombero.nombres?.charAt(0) || '') + (bombero.apellidos?.charAt(0) || 'B'))}
                       </Avatar>
                       <Box>
                         <Typography variant="h6" noWrap>
-                          {bombero.nombre}
+                          {`${bombero.nombres} ${bombero.apellidos}`}
                         </Typography>
                         <Chip 
                           size="small" 

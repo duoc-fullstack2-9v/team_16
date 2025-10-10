@@ -34,7 +34,8 @@ model User {
 // Modelo de bomberos
 model Bombero {
   id          Int      @id @default(autoincrement())
-  nombre      String
+  nombres     String
+  apellidos   String
   rango       String   // Bombero, Cabo, Sargento, etc.
   especialidad String?
   estado      String   @default("Activo") // Activo, Licencia, Inactivo

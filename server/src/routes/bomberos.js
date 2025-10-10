@@ -8,11 +8,17 @@ const prisma = new PrismaClient()
 
 // Schema de validación para bomberos
 const bomberoSchema = Joi.object({
-  nombre: Joi.string().min(2).max(100).required().messages({
-    'string.base': 'El nombre debe ser un texto',
-    'string.min': 'El nombre debe tener al menos 2 caracteres',
-    'string.max': 'El nombre no puede exceder 100 caracteres',
-    'any.required': 'El nombre es requerido'
+  nombres: Joi.string().min(2).max(100).required().messages({
+    'string.base': 'Los nombres deben ser un texto',
+    'string.min': 'Los nombres deben tener al menos 2 caracteres',
+    'string.max': 'Los nombres no pueden exceder 100 caracteres',
+    'any.required': 'Los nombres son requeridos'
+  }),
+  apellidos: Joi.string().min(2).max(100).required().messages({
+    'string.base': 'Los apellidos deben ser un texto',
+    'string.min': 'Los apellidos deben tener al menos 2 caracteres',
+    'string.max': 'Los apellidos no pueden exceder 100 caracteres',
+    'any.required': 'Los apellidos son requeridos'
   }),
   rango: Joi.string().valid('Bombero', 'Cabo', 'Sargento', 'Teniente', 'Capitán', 'Comandante').required().messages({
     'any.only': 'El rango debe ser: Bombero, Cabo, Sargento, Teniente, Capitán o Comandante',
@@ -47,7 +53,7 @@ router.get('/', authenticateToken, async (req, res) => {
       search = '', 
       rango = '', 
       estado = 'Activo',
-      sortBy = 'nombre',
+      sortBy = 'apellidos',
       sortOrder = 'asc' 
     } = req.query
 
@@ -56,18 +62,29 @@ router.get('/', authenticateToken, async (req, res) => {
     const skip = (pageNumber - 1) * limitNumber
 
     // Construir filtros
-    const filters = {
-      AND: [
-        estado ? { estado } : {},
-        rango ? { rango } : {},
-        search ? {
-          OR: [
-            { nombre: { contains: search, mode: 'insensitive' } },
-            { especialidad: { contains: search, mode: 'insensitive' } }
-          ]
-        } : {}
-      ]
+    const filterConditions = []
+    
+    if (estado) {
+      filterConditions.push({ estado })
     }
+    
+    if (rango) {
+      filterConditions.push({ rango })
+    }
+    
+    if (search) {
+      filterConditions.push({
+        OR: [
+          { nombres: { contains: search, mode: 'insensitive' } },
+          { apellidos: { contains: search, mode: 'insensitive' } },
+          { especialidad: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    }
+
+    const filters = filterConditions.length > 0 
+      ? { AND: filterConditions }
+      : {}
 
     // Obtener bomberos con paginación
     const [bomberos, total] = await Promise.all([

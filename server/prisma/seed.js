@@ -45,7 +45,8 @@ async function main() {
   const bomberos = await Promise.all([
     prisma.bombero.create({
       data: {
-        nombre: 'Pedro Sánchez',
+        nombres: 'Pedro',
+        apellidos: 'Sánchez',
         rango: 'Bombero',
         especialidad: 'Rescate urbano',
         telefono: '+56 9 1234 5678',
@@ -56,7 +57,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Carlos Mendoza',
+        nombres: 'Carlos',
+        apellidos: 'Mendoza',
         rango: 'Cabo',
         especialidad: 'Materiales peligrosos',
         telefono: '+56 9 2345 6789',
@@ -66,7 +68,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Ana García',
+        nombres: 'Ana',
+        apellidos: 'García',
         rango: 'Sargento',
         especialidad: 'Primeros auxilios',
         telefono: '+56 9 3456 7890',
@@ -76,7 +79,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Miguel Torres',
+        nombres: 'Miguel',
+        apellidos: 'Torres',
         rango: 'Bombero',
         especialidad: 'Conductor máquina bomba',
         telefono: '+56 9 4567 8901',
@@ -86,7 +90,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Laura Vargas',
+        nombres: 'Laura',
+        apellidos: 'Vargas',
         rango: 'Teniente',
         especialidad: 'Incendios forestales',
         telefono: '+56 9 5678 9012',
@@ -97,7 +102,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Roberto Silva',
+        nombres: 'Roberto',
+        apellidos: 'Silva',
         rango: 'Capitán',
         especialidad: 'Rescate en altura',
         telefono: '+56 9 6789 0123',
@@ -108,7 +114,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Patricia Morales',
+        nombres: 'Patricia',
+        apellidos: 'Morales',
         rango: 'Cabo',
         especialidad: 'Comunicaciones',
         telefono: '+56 9 7890 1234',
@@ -119,7 +126,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Jorge Ramírez',
+        nombres: 'Jorge',
+        apellidos: 'Ramírez',
         rango: 'Bombero',
         especialidad: 'Rescate vehicular',
         telefono: '+56 9 8901 2345',
@@ -130,7 +138,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Isabel Rojas',
+        nombres: 'Isabel',
+        apellidos: 'Rojas',
         rango: 'Sargento',
         especialidad: 'Prevención de riesgos',
         telefono: '+56 9 9012 3456',
@@ -142,7 +151,8 @@ async function main() {
     }),
     prisma.bombero.create({
       data: {
-        nombre: 'Fernando Castillo',
+        nombres: 'Fernando',
+        apellidos: 'Castillo',
         rango: 'Teniente',
         especialidad: 'Buceo y rescate acuático',
         telefono: '+56 9 0123 4567',

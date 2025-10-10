@@ -7,7 +7,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await api.post('/auth/login', credentials)
-      return response
+      return response.data
     } catch (error) {
       const message = error.response?.data?.message || 'Error de conexión'
       return rejectWithValue(message)
@@ -85,6 +85,7 @@ const authSlice = createSlice({
         // Guardar en localStorage
         localStorage.setItem('bomberosToken', action.payload.data.token)
         localStorage.setItem('bomberosUser', JSON.stringify(action.payload.data.user))
+        console.log('✅ Login exitoso - Token guardado:', action.payload.data.token)
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false

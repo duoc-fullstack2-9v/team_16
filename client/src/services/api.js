@@ -15,6 +15,9 @@ api.interceptors.request.use(
     const token = localStorage.getItem('bomberosToken')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('📤 Request con token:', token.substring(0, 20) + '...')
+    } else {
+      console.log('⚠️ No hay token en localStorage')
     }
     return config
   },
@@ -30,8 +33,11 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
+    console.error('❌ Error en API:', error.response?.status, error.response?.data)
+    
     // Si el token expira, limpiar localStorage y redirigir al login
     if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log('🔒 Token inválido/expirado - Limpiando sesión')
       localStorage.removeItem('bomberosToken')
       localStorage.removeItem('bomberosUser')
       

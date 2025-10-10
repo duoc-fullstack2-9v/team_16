@@ -74,6 +74,7 @@ const BomberoCard = ({ bombero, onEdit, onDelete, onClose, showActions = true })
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <Avatar 
+              src={bombero.fotoUrl || ''}
               sx={{ 
                 bgcolor: 'primary.main', 
                 mr: 2, 
@@ -82,11 +83,11 @@ const BomberoCard = ({ bombero, onEdit, onDelete, onClose, showActions = true })
                 fontSize: '1.5rem'
               }}
             >
-              {bombero.nombre?.charAt(0) || 'B'}
+              {!bombero.fotoUrl && ((bombero.nombres?.charAt(0) || '') + (bombero.apellidos?.charAt(0) || 'B'))}
             </Avatar>
             <Box>
               <Typography variant="h5" gutterBottom>
-                {bombero.nombre}
+                {`${bombero.nombres} ${bombero.apellidos}`}
               </Typography>
               <Stack direction="row" spacing={1}>
                 <Chip 

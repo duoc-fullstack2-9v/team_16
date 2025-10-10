@@ -205,6 +205,7 @@ const CitacionesPage = () => {
         })
       } else {
         // Crear
+        console.log('📝 Datos a enviar:', formData)
         await dispatch(createCitacion(formData)).unwrap()
         
         setNotification({
@@ -225,8 +226,17 @@ const CitacionesPage = () => {
       dispatch(fetchCitaciones(params))
       
     } catch (error) {
-      // El error se maneja en el useEffect global
       console.error('Error en form submit:', error)
+      // Mostrar el error con detalles
+      const errorMessage = Array.isArray(error) 
+        ? error.join(', ') 
+        : (typeof error === 'string' ? error : 'Error al crear citación')
+      
+      setNotification({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      })
     }
   }
 
@@ -261,6 +271,39 @@ const CitacionesPage = () => {
 
   const handleDeleteCancel = () => {
     setDeleteDialog({ open: false, citacion: null })
+  }
+
+  const handleCancel = async (citacion) => {
+    try {
+      // Confirmar antes de cancelar
+      if (window.confirm(`¿Estás seguro de que deseas cancelar la citación "${citacion.titulo}"?`)) {
+        await dispatch(updateCitacion({
+          id: citacion.id,
+          data: { estado: 'Cancelada' }
+        })).unwrap()
+        
+        setNotification({
+          open: true,
+          message: 'Citación cancelada exitosamente',
+          severity: 'success'
+        })
+        
+        // Recargar datos
+        const params = {
+          page: pagination.current,
+          limit: 12,
+          ...filters
+        }
+        dispatch(fetchCitaciones(params))
+      }
+    } catch (error) {
+      console.error('Error al cancelar citación:', error)
+      setNotification({
+        open: true,
+        message: error || 'Error al cancelar la citación',
+        severity: 'error'
+      })
+    }
   }
 
   const handleAssignSubmit = async (bomberosIds) => {
@@ -352,6 +395,7 @@ const CitacionesPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onAssign={handleAssignOrAttendance}
+          onCancel={handleCancel}
           deleteLoading={deleteLoading}
         />
 

@@ -38,6 +38,7 @@ const CitacionesList = ({
   onEdit,
   onDelete,
   onAssign,
+  onCancel,
   deleteLoading = false
 }) => {
   const [localFilters, setLocalFilters] = useState({
@@ -106,7 +107,22 @@ const CitacionesList = ({
                           localFilters.fechaHasta
 
   const getEstadoStats = () => {
-    const stats = citaciones.reduce((acc, citacion) => {
+    // Calcular rango de 60 días (30 atrás, 30 adelante)
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now)
+    thirtyDaysAgo.setDate(now.getDate() - 30)
+    
+    const thirtyDaysAhead = new Date(now)
+    thirtyDaysAhead.setDate(now.getDate() + 30)
+    
+    // Filtrar citaciones dentro del rango de 60 días
+    const citacionesEnRango = citaciones.filter(citacion => {
+      const fechaCitacion = new Date(citacion.fecha)
+      return fechaCitacion >= thirtyDaysAgo && fechaCitacion <= thirtyDaysAhead
+    })
+    
+    // Contar por estado solo las citaciones en rango
+    const stats = citacionesEnRango.reduce((acc, citacion) => {
       acc[citacion.estado] = (acc[citacion.estado] || 0) + 1
       return acc
     }, {})
@@ -144,27 +160,27 @@ const CitacionesList = ({
         {Object.keys(estadoStats).length > 0 && (
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Estado de citaciones
+              Estado de citaciones (últimos 30 días - próximos 30 días)
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              {estadoStats.programada && (
+              {estadoStats.Programada && (
                 <Chip 
-                  label={`${estadoStats.programada} Programadas`}
-                  color="primary"
+                  label={`${estadoStats.Programada} Programadas`}
+                  color="info"
                   size="small"
                 />
               )}
-              {estadoStats.realizada && (
+              {estadoStats.Realizada && (
                 <Chip 
-                  label={`${estadoStats.realizada} Realizadas`}
+                  label={`${estadoStats.Realizada} Realizadas`}
                   color="success"
                   size="small"
                 />
               )}
-              {estadoStats.cancelada && (
+              {estadoStats.Cancelada && (
                 <Chip 
-                  label={`${estadoStats.cancelada} Canceladas`}
-                  color="error"
+                  label={`${estadoStats.Cancelada} Canceladas`}
+                  color="warning"
                   size="small"
                 />
               )}
@@ -321,6 +337,7 @@ const CitacionesList = ({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onAssign={onAssign}
+                    onCancel={onCancel}
                     loading={deleteLoading}
                   />
                 </Grid>
