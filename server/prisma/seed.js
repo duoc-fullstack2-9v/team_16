@@ -7,10 +7,11 @@ async function main() {
   console.log('🌱 Iniciando seeders...')
 
   // Limpiar datos existentes
+  await prisma.asignacionCargo.deleteMany()
+  await prisma.cargo.deleteMany()
   await prisma.bomberoCitacion.deleteMany()
   await prisma.citacion.deleteMany()
   await prisma.bombero.deleteMany()
-  await prisma.oficial.deleteMany()
   await prisma.user.deleteMany()
   
   console.log('🧹 Datos existentes eliminados')
@@ -468,86 +469,186 @@ async function main() {
   console.log('📅 Citaciones creadas:', citaciones.length)
   console.log('📅 Bomberos asignados a citaciones')
 
-  // Crear oficiales con nuevo esquema
-  const oficiales = await Promise.all([
-    prisma.oficial.create({
+  // Crear cargos de la compañía
+  const cargos = await Promise.all([
+    // RAMA ADMINISTRATIVA
+    prisma.cargo.create({
       data: {
-        nombres: 'Roberto',
-        apellidos: 'Silva Martinez',
-        rut: '12345678-9',
-        rango: 'COMANDANTE',
-        especialidades: 'Administración y Comando',
-        telefono: '+56 9 5678 9012',
-        email: 'comandante@bomberos.cl',
-        fechaIngreso: new Date('2010-01-15'),
-        departamento: 'COMANDO',
-        activo: true,
-        createdById: admin.id
+        nombre: 'Director',
+        descripcion: 'Autoridad máxima de la compañía. Representa legalmente a la institución y dirige todas las operaciones.',
+        rama: 'ADMINISTRATIVA',
+        jerarquia: 1,
+        maxOcupantes: 1,
+        activo: true
       }
     }),
-    prisma.oficial.create({
+    prisma.cargo.create({
       data: {
-        nombres: 'Carmen',
-        apellidos: 'López González',
-        rut: '23456789-0',
-        rango: 'CAPITAN',
-        especialidades: 'Operaciones y Entrenamientos',
-        telefono: '+56 9 6789 0123',
-        email: 'capitan@bomberos.cl',
-        fechaIngreso: new Date('2015-03-20'),
-        departamento: 'OPERACIONES',
-        activo: true,
-        createdById: admin.id
+        nombre: 'Secretario',
+        descripcion: 'Responsable de la documentación oficial, actas y comunicaciones de la compañía.',
+        rama: 'ADMINISTRATIVA',
+        jerarquia: 2,
+        maxOcupantes: 1,
+        activo: true
       }
     }),
-    prisma.oficial.create({
+    prisma.cargo.create({
       data: {
-        nombres: 'Luis',
-        apellidos: 'Morales Ruiz',
-        rut: '34567890-1',
-        rango: 'TENIENTE',
-        especialidades: 'Materiales Peligrosos',
-        telefono: '+56 9 7890 1234',
-        email: 'teniente@bomberos.cl',
-        fechaIngreso: new Date('2018-06-10'),
-        departamento: 'OPERACIONES',
-        activo: true,
-        createdById: admin.id
+        nombre: 'Tesorero',
+        descripcion: 'Administra los recursos financieros, presupuesto y contabilidad de la compañía.',
+        rama: 'ADMINISTRATIVA',
+        jerarquia: 3,
+        maxOcupantes: 1,
+        activo: true
       }
     }),
-    prisma.oficial.create({
+    
+    // RAMA OPERATIVA
+    prisma.cargo.create({
       data: {
-        nombres: 'Maria',
-        apellidos: 'Fernandez Castro',
-        rut: '45678901-2',
-        rango: 'SARGENTO',
-        especialidades: 'Capacitación y Entrenamientos',
-        telefono: '+56 9 8901 2345',
-        email: 'sargento@bomberos.cl',
-        fechaIngreso: new Date('2020-02-14'),
-        departamento: 'CAPACITACION',
-        activo: true,
-        createdById: admin.id
+        nombre: 'Capitán',
+        descripcion: 'Comandante de las operaciones de emergencia. Máxima autoridad en el terreno.',
+        rama: 'OPERATIVA',
+        jerarquia: 1,
+        maxOcupantes: 1,
+        activo: true
       }
     }),
-    prisma.oficial.create({
+    prisma.cargo.create({
       data: {
-        nombres: 'Jorge',
-        apellidos: 'Ramirez Soto',
-        rut: '56789012-3',
-        rango: 'ALFEREZ',
-        especialidades: 'Mantenimiento de Equipos',
-        telefono: '+56 9 9012 3456',
-        email: 'alferez@bomberos.cl',
-        fechaIngreso: new Date('2021-08-25'),
-        departamento: 'MANTENIMIENTO',
-        activo: true,
-        createdById: admin.id
+        nombre: 'Teniente Primero',
+        descripcion: 'Segundo al mando en operaciones. Asiste al Capitán en la coordinación de emergencias.',
+        rama: 'OPERATIVA',
+        jerarquia: 2,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Teniente Segundo',
+        descripcion: 'Tercer oficial en la línea de mando operativo.',
+        rama: 'OPERATIVA',
+        jerarquia: 3,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Teniente Tercero',
+        descripcion: 'Cuarto oficial en la línea de mando operativo.',
+        rama: 'OPERATIVA',
+        jerarquia: 4,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Ayudante',
+        descripcion: 'Asiste en las operaciones y coordina el personal en terreno.',
+        rama: 'OPERATIVA',
+        jerarquia: 5,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    
+    // CONSEJOS DE DISCIPLINA
+    prisma.cargo.create({
+      data: {
+        nombre: 'Consejero de Disciplina 1',
+        descripcion: 'Miembro del consejo encargado de velar por el cumplimiento del reglamento y la disciplina.',
+        rama: 'CONSEJOS',
+        jerarquia: 1,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Consejero de Disciplina 2',
+        descripcion: 'Miembro del consejo encargado de velar por el cumplimiento del reglamento y la disciplina.',
+        rama: 'CONSEJOS',
+        jerarquia: 2,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Consejero de Disciplina 3',
+        descripcion: 'Miembro del consejo encargado de velar por el cumplimiento del reglamento y la disciplina.',
+        rama: 'CONSEJOS',
+        jerarquia: 3,
+        maxOcupantes: 1,
+        activo: true
+      }
+    }),
+    prisma.cargo.create({
+      data: {
+        nombre: 'Consejero de Disciplina 4',
+        descripcion: 'Miembro del consejo encargado de velar por el cumplimiento del reglamento y la disciplina.',
+        rama: 'CONSEJOS',
+        jerarquia: 4,
+        maxOcupantes: 1,
+        activo: true
       }
     })
   ])
 
-  console.log('👨‍✈️ Oficiales creados:', oficiales.length)
+  console.log('🏛️ Cargos creados:', cargos.length)
+
+  // Crear algunas asignaciones de ejemplo (Director, Capitán y 2 Consejeros)
+  const añoActual = new Date().getFullYear()
+  
+  await prisma.asignacionCargo.create({
+    data: {
+      cargoId: cargos[0].id, // Director
+      bomberoId: bomberos[2].id, // Ana García (Sargento)
+      fechaInicio: new Date(`${añoActual}-01-01`),
+      periodoAnio: añoActual,
+      activo: true,
+      observaciones: 'Asignación período ' + añoActual
+    }
+  })
+
+  await prisma.asignacionCargo.create({
+    data: {
+      cargoId: cargos[3].id, // Capitán
+      bomberoId: bomberos[4].id, // Laura Vargas (Teniente)
+      fechaInicio: new Date(`${añoActual}-01-01`),
+      periodoAnio: añoActual,
+      activo: true,
+      observaciones: 'Asignación período ' + añoActual
+    }
+  })
+
+  await prisma.asignacionCargo.create({
+    data: {
+      cargoId: cargos[8].id, // Consejero 1
+      bomberoId: bomberos[1].id, // Carlos Mendoza (Cabo)
+      fechaInicio: new Date(`${añoActual}-01-01`),
+      periodoAnio: añoActual,
+      activo: true,
+      observaciones: 'Asignación período ' + añoActual
+    }
+  })
+
+  await prisma.asignacionCargo.create({
+    data: {
+      cargoId: cargos[9].id, // Consejero 2
+      bomberoId: bomberos[6].id, // Fernando Rojas (Cabo)
+      fechaInicio: new Date(`${añoActual}-01-01`),
+      periodoAnio: añoActual,
+      activo: true,
+      observaciones: 'Asignación período ' + añoActual
+    }
+  })
+
+  console.log('� Asignaciones de cargos creadas: 4')
+  console.log('👨‍✈️ Sistema de cargos configurado')
 
   console.log('✅ Seeders completados exitosamente!')
   console.log('')

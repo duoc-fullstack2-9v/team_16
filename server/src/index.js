@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.js'
 import bomberosRoutes from './routes/bomberos.js'
 import citacionesRoutes from './routes/citaciones.js'
-import oficialesRoutes from './routes/oficiales.js'
+import cargosRoutes from './routes/cargos.js'
 import adminRoutes from './routes/admin.js'
 
 // Configurar variables de entorno
@@ -88,7 +88,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/bomberos', bomberosRoutes)
 app.use('/api/citaciones', citacionesRoutes)
-app.use('/api/oficiales', oficialesRoutes)
+app.use('/api/cargos', cargosRoutes)
 app.use('/api/admin', adminRoutes)
 
 // Ruta 404

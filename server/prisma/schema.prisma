@@ -24,7 +24,6 @@ model User {
 
   // Relaciones
   bomberosCreados Bombero[] @relation("BomberoCreatedBy")
-  oficialesCreados Oficial[] @relation("OficialCreatedBy")
   citacionesCreadas Citacion[] @relation("CitacionCreatedBy")
   citacionesBombero BomberoCitacion[]
 
@@ -51,45 +50,47 @@ model Bombero {
   // Relaciones
   createdBy   User? @relation("BomberoCreatedBy", fields: [createdById], references: [id])
   citaciones  BomberoCitacion[]
+  asignacionesCargo AsignacionCargo[]
 
   @@map("bomberos")
 }
 
-// Modelo de oficiales con jerarquía y especialidades
-model Oficial {
-  id                Int       @id @default(autoincrement())
-  nombres           String
-  apellidos         String
-  rut               String    @unique
-  rango             String    // Comandante, Capitán, Teniente, Sargento, etc.
-  cargo             String?   // Director, Subdirector, Jefe de Compañía, etc.
-  especialidades    String?   // JSON array: ["Rescate", "MATPEL", "Primeros Auxilios"]
-  departamento      String?   // Operaciones, Administración, Capacitación, etc.
-  telefono          String?
-  email             String?   @unique
-  fechaIngreso      DateTime?
-  fechaNacimiento   DateTime?
-  direccion         String?
-  estadoCivil       String?
-  nivelEducacion    String?
-  certificaciones   String?   // JSON array de certificaciones
-  experienciaAnios  Int?      // Años de experiencia
-  activo            Boolean   @default(true)
-  observaciones     String?
-  fotoUrl           String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  createdById       Int?
+// Modelo de cargos de la compañía (Director, Secretario, etc.)
+model Cargo {
+  id              Int       @id @default(autoincrement())
+  nombre          String    @unique  // "Director", "Secretario", "Tesorero", etc.
+  descripcion     String?   // Descripción del cargo
+  rama            String    // "ADMINISTRATIVA", "OPERATIVA", "CONSEJOS"
+  jerarquia       Int       // Orden jerárquico dentro de la rama (1=más alto)
+  maxOcupantes    Int       @default(1) // Número máximo de ocupantes (1 para la mayoría, 4 para Consejeros)
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relación con asignaciones
+  asignaciones    AsignacionCargo[]
 
-  // Relaciones jerárquicas
-  superiornId       Int?      // ID del oficial superior directo
-  superior          Oficial?  @relation("JerarquiaOficiales", fields: [superiornId], references: [id])
-  subordinados      Oficial[] @relation("JerarquiaOficiales")
+  @@map("cargos")
+}
 
-  // Relación con usuario del sistema
-  createdBy         User?     @relation("OficialCreatedBy", fields: [createdById], references: [id])
+// Modelo de asignación de cargos a bomberos (con historial)
+model AsignacionCargo {
+  id              Int       @id @default(autoincrement())
+  cargoId         Int
+  bomberoId       Int
+  fechaInicio     DateTime  @default(now())
+  fechaFin        DateTime? // null = aún activo en el cargo
+  periodoAnio     Int       // Año del período (ej: 2025)
+  activo          Boolean   @default(true) // true = asignación actual, false = historial
+  observaciones   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  cargo           Cargo     @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  bombero         Bombero   @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
 
-  @@map("oficiales")
+  @@map("asignaciones_cargos")
 }
 
 // Modelo de citaciones
