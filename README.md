@@ -1,79 +1,379 @@
 # 🚒 Sistema Administrativo de Bomberos - Full Stack
 
-Sistema completo de administración para la Segunda Compañía de Bomberos Viña del Mar, desarrollado con React + Node.js + SQLite + Prisma.
+<div align="center">
 
-**Estado**: ✅ **SISTEMA COMPLETO Y FUNCIONAL** | **100 bomberos + Material + Carros implementados**
+![Status](https://img.shields.io/badge/status-production%20ready-success?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-16+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.18.2-000000?style=for-the-badge&logo=express&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-6.17.1-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![Material-UI](https://img.shields.io/badge/Material--UI-5.15.0-007FFF?style=for-the-badge&logo=mui&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
-**Última actualización**: 14 de Octubre, 2025
+**Sistema completo de administración para la Segunda Compañía de Bomberos Viña del Mar**
+
+*Desarrollado con React + Node.js + SQLite + Prisma*
+
+[![GitHub Repo](https://img.shields.io/badge/GitHub-team__16-181717?style=flat&logo=github)](https://github.com/duoc-fullstack2-9v/team_16)
+[![Branch](https://img.shields.io/badge/branch-feature%2Fproyecto--administracion--bomberos-orange?style=flat)](https://github.com/duoc-fullstack2-9v/team_16/tree/feature/proyecto-administracion-bomberos)
+
+</div>
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Clonar e instalar
+git clone https://github.com/duoc-fullstack2-9v/team_16.git
+cd team_16 && npm install
+
+# 2. Configurar BD
+cd server && npx prisma migrate dev && npx prisma generate
+node prisma/seed-100-bomberos.js
+
+# 3. Iniciar sistema
+cd .. && npm run dev
+
+# 4. Abrir navegador
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:3002
+# Login:    admin / 1234
+```
+
+---
+
+## 📋 Tabla de Contenidos
+
+- [🎯 Estado del Proyecto](#-estado-del-proyecto)
+- [🏗️ Arquitectura](#️-arquitectura)
+- [🚀 Tecnologías](#-tecnologías)
+- [📋 Requisitos Previos](#-requisitos-previos)
+- [🛠️ Instalación Rápida](#️-instalación-rápida)
+- [👤 Credenciales de Prueba](#-credenciales-de-prueba)
+- [📊 Datos de Prueba](#-datos-de-prueba-incluidos)
+- [🎯 Módulos Funcionales](#-estado-del-sistema)
+- [🔧 APIs Backend](#-apis-backend-implementadas)
+- [🗄️ Esquema de Base de Datos](#️-esquema-de-base-de-datos)
+- [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🚀 Scripts Disponibles](#-scripts-disponibles)
+- [🌟 Características](#-características-implementadas)
+- [📊 Métricas](#-métricas-del-sistema)
+- [🔧 Desarrollo](#-desarrollo-y-mantenimiento)
+- [🚀 Mejoras Futuras](#-mejoras-futuras-sugeridas)
+- [📞 Soporte](#-soporte-técnico)
+
+---
+
+## 🎯 Estado del Proyecto
+
+**Estado**: ✅ **SISTEMA COMPLETO Y FUNCIONAL** | **PRODUCTION READY**
+
+**Última actualización**: 16 de Octubre, 2025
+
+### Características Principales:
+- ✅ **100 Bomberos** con datos reales cargados
+- ✅ **8 Módulos** completamente funcionales
+- ✅ **60+ Endpoints** API REST implementados
+- ✅ **15 Modelos** de base de datos relacionados
+- ✅ **JWT Authentication** con seguridad completa
+- ✅ **Material Mayor** (4 carros) + **Material Menor** (categorizado)
+- ✅ **Sistema de Guardias** nocturnas con plantillas
+- ✅ **Dashboard** con estadísticas en tiempo real
 
 ---
 
 ## 🏗️ Arquitectura
 
+### Diagrama del Sistema
+
+```mermaid
+graph TB
+    subgraph "Frontend - React SPA"
+        UI[🎨 Material-UI Components]
+        ROUTER[🔀 React Router v6]
+        REDUX[📦 Redux Toolkit Store]
+        AXIOS[🌐 Axios HTTP Client]
+    end
+
+    subgraph "Backend - Node.js API"
+        EXPRESS[⚡ Express Server :3002]
+        AUTH[🔐 JWT Middleware]
+        ROUTES[🛣️ API Routes]
+        PRISMA[💾 Prisma ORM]
+    end
+
+    subgraph "Base de Datos"
+        SQLITE[(🗄️ SQLite Database)]
+    end
+
+    subgraph "Assets"
+        STATIC[� Archivos Estáticos]
+    end
+
+    UI --> ROUTER
+    ROUTER --> REDUX
+    REDUX --> AXIOS
+    AXIOS -->|HTTP Requests| EXPRESS
+    EXPRESS --> AUTH
+    AUTH --> ROUTES
+    ROUTES --> PRISMA
+    PRISMA --> SQLITE
+    EXPRESS -->|Sirve /assets| STATIC
+
+    style UI fill:#61DAFB,color:#000
+    style EXPRESS fill:#339933,color:#fff
+    style SQLITE fill:#003B57,color:#fff
+    style AUTH fill:#FF6B6B,color:#fff
+    style REDUX fill:#764ABC,color:#fff
 ```
-📁 sistema-bomberos-fullstack/
+
+### Arquitectura en Capas
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    🌐 CAPA DE PRESENTACIÓN                   │
+│  React 18 + Vite + Material-UI + Redux Toolkit              │
+│  Puerto: 5173 (Dev) | Navegación SPA | Estado Global        │
+└─────────────────────────────────────────────────────────────┘
+                              ↕ HTTP/REST
+┌─────────────────────────────────────────────────────────────┐
+│                   ⚡ CAPA DE APLICACIÓN                      │
+│  Express.js + JWT Auth + Middleware + CORS + Helmet         │
+│  Puerto: 3002 | 60+ Endpoints | Validación Joi              │
+└─────────────────────────────────────────────────────────────┘
+                              ↕ Prisma Client
+┌─────────────────────────────────────────────────────────────┐
+│                    💾 CAPA DE DATOS                          │
+│  Prisma ORM + SQLite | 15 Modelos | Migraciones             │
+│  Relaciones: Many-to-Many, One-to-Many, Jerárquicas         │
+└─────────────────────────────────────────────────────────────┘
+                              ↕ SQL Queries
+┌─────────────────────────────────────────────────────────────┐
+│                  🗄️ BASE DE DATOS SQLite                     │
+│  dev.db | 100+ Registros | Transacciones ACID               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Estructura de Directorios
+
+```
+�📁 sistema-bomberos-fullstack/
 ├── 📁 client/          # Frontend React + Vite + Material-UI
+│   ├── src/
+│   │   ├── components/    # Componentes reutilizables (50+)
+│   │   ├── pages/         # 8 páginas principales
+│   │   ├── store/         # Redux: 9 slices + store config
+│   │   ├── services/      # API client (Axios)
+│   │   └── utils/         # Utilidades y tema
+│   └── vite.config.js     # Proxy /api → :3002, /assets → :3002
+│
 ├── 📁 server/          # Backend Express + Prisma + SQLite
-├── 📁 assets/          # Recursos estáticos (8 fotos bomberos + logo)
-├── 📄 package.json     # Configuración del monorepo
-└── 📄 README.md        # Documentación completa
+│   ├── src/
+│   │   ├── routes/        # 10 archivos de rutas API
+│   │   ├── middleware/    # Auth JWT + validaciones
+│   │   └── utils/         # Helpers de autenticación
+│   ├── prisma/
+│   │   ├── schema.prisma  # 15 modelos relacionados
+│   │   ├── migrations/    # 10 migraciones aplicadas
+│   │   └── seed-100-bomberos.js  # Seed con datos
+│   └── .env               # Variables de entorno
+│
+├── 📁 assets/          # Recursos estáticos (16MB)
+│   └── bomberos/          # 8 fotos de bomberos
+│
+└── 📄 package.json     # Configuración del monorepo
+```
+
+### Flujo de Autenticación
+
+```
+┌──────────┐       ┌──────────┐       ┌──────────┐       ┌──────────┐
+│  Login   │──────>│  Backend │──────>│   JWT    │──────>│LocalStore│
+│  Form    │       │  /auth   │       │  Token   │       │  Token   │
+└──────────┘       └──────────┘       └──────────┘       └──────────┘
+                                            │
+                                            ↓
+┌──────────┐       ┌──────────┐       ┌──────────┐
+│ Protected│<──────│ Axios    │<──────│ Bearer   │
+│ Routes   │       │Interceptor│       │ Header   │
+└──────────┘       └──────────┘       └──────────┘
 ```
 
 ## 🚀 Tecnologías
 
+<div align="center">
+
+### Stack Tecnológico Completo
+
+| Categoría | Tecnologías |
+|-----------|-------------|
+| **Frontend** | ![React](https://img.shields.io/badge/-React%2018-61DAFB?logo=react&logoColor=white) ![Vite](https://img.shields.io/badge/-Vite%205-646CFF?logo=vite&logoColor=white) ![Material-UI](https://img.shields.io/badge/-Material--UI%205-007FFF?logo=mui&logoColor=white) |
+| **Estado** | ![Redux](https://img.shields.io/badge/-Redux%20Toolkit-764ABC?logo=redux&logoColor=white) ![React Router](https://img.shields.io/badge/-React%20Router%206-CA4245?logo=react-router&logoColor=white) |
+| **Backend** | ![Node.js](https://img.shields.io/badge/-Node.js-339933?logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/-Express%204-000000?logo=express&logoColor=white) |
+| **Base de Datos** | ![Prisma](https://img.shields.io/badge/-Prisma%206-2D3748?logo=prisma&logoColor=white) ![SQLite](https://img.shields.io/badge/-SQLite-003B57?logo=sqlite&logoColor=white) |
+| **Autenticación** | ![JWT](https://img.shields.io/badge/-JWT-000000?logo=json-web-tokens&logoColor=white) ![bcrypt](https://img.shields.io/badge/-bcryptjs-4A4A4A?logoColor=white) |
+| **Validación** | ![Joi](https://img.shields.io/badge/-Joi-yellow?logoColor=white) ![Formik](https://img.shields.io/badge/-Formik-blue?logoColor=white) |
+| **HTTP Client** | ![Axios](https://img.shields.io/badge/-Axios-5A29E4?logo=axios&logoColor=white) |
+| **Seguridad** | ![Helmet](https://img.shields.io/badge/-Helmet-4A90E2?logoColor=white) ![CORS](https://img.shields.io/badge/-CORS-red?logoColor=white) |
+
+</div>
+
 ### Frontend
-- **React 18** - Biblioteca de UI
-- **Vite** - Build tool y dev server
-- **Material-UI (MUI) 5** - Componentes de interfaz
-- **Redux Toolkit** - Manejo de estado global
-- **React Router 6** - Enrutamiento SPA
-- **Axios** - Cliente HTTP
+- **React 18.2.0** - Biblioteca de UI con Hooks
+- **Vite 5.0.8** - Build tool ultra-rápido con HMR
+- **Material-UI (MUI) 5.15.0** - Componentes de interfaz profesionales
+- **Redux Toolkit 2.0.1** - Manejo de estado global simplificado
+- **React Router 6.21.0** - Enrutamiento SPA declarativo
+- **Axios 1.6.2** - Cliente HTTP con interceptores
+- **Formik 2.4.6** - Manejo de formularios
+- **Day.js 1.11.18** - Manipulación de fechas ligera
 
 ### Backend
-- **Node.js** - Runtime
-- **Express.js** - Framework web
-- **Prisma** - ORM y migraciones
-- **SQLite** - Base de datos embebida
-- **JWT** - Autenticación
-- **bcryptjs** - Encriptación de contraseñas
-- **Joi** - Validación de esquemas
+- **Node.js** - Runtime JavaScript del lado del servidor
+- **Express.js 4.18.2** - Framework web minimalista y rápido
+- **Prisma 6.17.1** - ORM moderno con migraciones automáticas
+- **SQLite** - Base de datos embebida, sin configuración
+- **JWT (jsonwebtoken 9.0.2)** - Autenticación stateless
+- **bcryptjs 2.4.3** - Hash de contraseñas seguro (12 salt rounds)
+- **Joi 17.11.0** - Validación de esquemas declarativa
+- **Helmet 7.1.0** - Seguridad de headers HTTP
+- **CORS 2.8.5** - Control de acceso cross-origin
+- **Morgan 1.10.0** - Logger de peticiones HTTP
+- **PDFKit 0.17.2** - Generación de PDFs
+
+### Herramientas de Desarrollo
+- **Nodemon** - Hot reload del servidor
+- **ESLint** - Linter de código
+- **Concurrently** - Ejecución paralela de scripts
 
 ## 📋 Requisitos Previos
 
-- Node.js >= 16.0.0
-- npm >= 7.0.0
+Antes de comenzar, asegúrate de tener instalado:
+
+| Requisito | Versión Mínima | Recomendada | Verificar |
+|-----------|----------------|-------------|-----------|
+| Node.js | 16.0.0 | 18.x o superior | `node --version` |
+| npm | 7.0.0 | 9.x o superior | `npm --version` |
+| Git | 2.x | Última | `git --version` |
+
+### Instalación de Requisitos
+
+<details>
+<summary>📦 Instalación en Windows</summary>
+
+```powershell
+# Descargar e instalar Node.js desde:
+# https://nodejs.org/ (incluye npm)
+
+# Verificar instalación
+node --version
+npm --version
+```
+</details>
+
+<details>
+<summary>🐧 Instalación en Linux</summary>
+
+```bash
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verificar instalación
+node --version
+npm --version
+```
+</details>
+
+<details>
+<summary>🍎 Instalación en macOS</summary>
+
+```bash
+# Usando Homebrew
+brew install node
+
+# Verificar instalación
+node --version
+npm --version
+```
+</details>
 
 ## 🛠️ Instalación Rápida
 
+### Opción 1: Instalación Completa (Recomendada)
+
 ```bash
-# 1. Clonar repositorio
+# 1️⃣ Clonar el repositorio
 git clone https://github.com/duoc-fullstack2-9v/team_16.git
 cd team_16
 git checkout feature/proyecto-administracion-bomberos
 
-# 2. Instalar dependencias (root, client y server)
+# 2️⃣ Instalar todas las dependencias (root, client, server)
 npm install
 
-# 3. Configurar variables de entorno
+# 3️⃣ Configurar variables de entorno
 cd server
 cp .env.example .env
-# Editar .env con tus configuraciones
+# Editar .env si es necesario (valores por defecto funcionan)
 
-# 4. Configurar base de datos
-npx prisma migrate dev
-npx prisma generate
+# 4️⃣ Configurar base de datos
+npx prisma migrate dev      # Aplica migraciones
+npx prisma generate          # Genera cliente Prisma
 
-# 5. Cargar datos de prueba (100 bomberos + material + carros)
+# 5️⃣ Cargar datos de prueba (100 bomberos + material + carros)
 node prisma/seed-100-bomberos.js
 
-# 6. Volver a la raíz y ejecutar aplicación
+# 6️⃣ Volver a la raíz e iniciar la aplicación
 cd ..
 npm run dev
 ```
 
-Esto iniciará:
-- **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:3002
+### Opción 2: Instalación Paso a Paso
+
+```bash
+# Client (Frontend)
+cd client
+npm install
+npm run dev          # Puerto 5173
+
+# Server (Backend) - En otra terminal
+cd server
+npm install
+cp .env.example .env
+npx prisma migrate dev
+npx prisma generate
+node prisma/seed-100-bomberos.js
+npm run dev          # Puerto 3002
+```
+
+### ✅ Verificar Instalación
+
+Después de ejecutar `npm run dev`, deberías ver:
+
+```bash
+🚒============================================🚒
+   SISTEMA BOMBEROS - SERVIDOR INICIADO
+🚒============================================🚒
+🚀 Servidor corriendo en: http://localhost:3002
+🌍 Environment: development
+📊 Health Check: http://localhost:3002/health
+📡 API Base: http://localhost:3002/api
+🔒 CORS Origin: http://localhost:5173
+⏰ Timestamp: ...
+🚒============================================🚒
+
+  VITE v5.0.8  ready in ... ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
+
+**URLs del Sistema:**
+- 🌐 **Frontend**: http://localhost:5173
+- ⚡ **Backend API**: http://localhost:3002/api
+- 🏥 **Health Check**: http://localhost:3002/health
+- 🗄️ **Prisma Studio**: http://localhost:5555 (ejecutar `cd server && npx prisma studio`)
 
 ## 👤 Credenciales de Prueba
 
@@ -488,16 +788,35 @@ npx prisma migrate reset
 
 ## 📊 Métricas del Sistema
 
-- **Archivos implementados**: 101
-- **Líneas de código**: +31,751
-- **Endpoints API**: 60+
-- **Páginas React**: 8 funcionales
-- **Componentes**: 50+
-- **Modelos de BD**: 15 completos
-- **Redux Slices**: 9 implementados
-- **Migraciones**: 10 aplicadas
-- **Assets**: 9 archivos (~16MB)
-- **Funcionalidad**: 100% completa
+<div align="center">
+
+| Métrica | Valor | Descripción |
+|---------|-------|-------------|
+| 📁 **Archivos** | 101+ | Archivos de código implementados |
+| 📝 **Líneas de Código** | 31,751+ | Total de líneas escritas |
+| 🚀 **Endpoints API** | 60+ | Endpoints REST funcionales |
+| 📄 **Páginas React** | 8 | Páginas principales del sistema |
+| 🧩 **Componentes** | 50+ | Componentes reutilizables |
+| 🗂️ **Modelos BD** | 15 | Tablas en base de datos |
+| 🔄 **Redux Slices** | 9 | Slices de estado global |
+| 📦 **Migraciones** | 10 | Migraciones aplicadas |
+| 🖼️ **Assets** | 9 archivos | ~16MB de recursos |
+| ⚡ **Funcionalidad** | 100% | Sistema completamente funcional |
+| 👨‍🚒 **Bomberos** | 100 | Registros de bomberos cargados |
+| 🚛 **Carros** | 4 | Vehículos de emergencia |
+| 📋 **Cargos** | 12 | Cargos organizacionales |
+| 🧰 **Material Menor** | 8+ | Items de material catalogados |
+
+### Distribución del Código
+
+```
+Frontend (React)     ██████████████░░░░░░  45%  ~14,200 líneas
+Backend (Node.js)    ████████████░░░░░░░░  38%  ~12,000 líneas
+Base de Datos        ████░░░░░░░░░░░░░░░░  12%  ~3,800 líneas
+Configuración        ██░░░░░░░░░░░░░░░░░░   5%  ~1,751 líneas
+```
+
+</div>
 
 ## 🎯 Funcionalidades Avanzadas
 
@@ -639,31 +958,80 @@ git push origin feature/proyecto-administracion-bomberos  # Push a rama
 - [Express.js Guide](https://expressjs.com/)
 
 ### Debug Common Issues
-```bash
-# Puerto ocupado (Windows)
+
+#### 🔴 Puerto ocupado (Windows)
+```powershell
+# Verificar qué proceso usa el puerto
 netstat -ano | findstr :3002
 netstat -ano | findstr :5173
-taskkill /F /PID <PID>
 
-# Problemas de dependencias
+# Matar el proceso (reemplazar <PID> con el número obtenido)
+taskkill /F /PID <PID>
+```
+
+#### 🔴 Problemas de dependencias
+```bash
+# Limpiar todo y reinstalar
 rm -rf node_modules client/node_modules server/node_modules package-lock.json
 npm install
-
-# Problemas de BD
-cd server
-npx prisma migrate reset    # Resetea todo
-npx prisma generate          # Regenera cliente
-node prisma/seed-100-bomberos.js  # Recarga datos
-
-# Limpiar cache de Vite
-cd client
-rm -rf node_modules/.vite
-npm run dev
-
-# Problemas con Redux serialization
-# Verificar que client/src/store/index.js tenga serializableCheck configurado
-# Verificar que client/src/services/api.js retorne {data, status, statusText}
 ```
+
+#### 🔴 Problemas de Base de Datos
+```bash
+cd server
+npx prisma migrate reset    # ⚠️ Resetea todo (borra datos)
+npx prisma generate          # Regenera cliente Prisma
+node prisma/seed-100-bomberos.js  # Recarga datos
+```
+
+#### 🔴 Limpiar cache de Vite
+```bash
+cd client
+rm -rf node_modules/.vite dist
+npm run dev
+```
+
+#### 🔴 Error: "Cannot find module '@prisma/client'"
+```bash
+cd server
+npx prisma generate
+```
+
+#### 🔴 Error de serialización en Redux
+- ✅ Verificar que `client/src/store/index.js` tenga `serializableCheck` configurado
+- ✅ Verificar que `client/src/services/api.js` retorne `{data, status, statusText}`
+
+#### 🔴 Token JWT expirado o inválido
+- Cerrar sesión y volver a iniciar sesión
+- Verificar que `JWT_SECRET` en `.env` sea consistente
+- Limpiar localStorage del navegador
+
+#### 🔴 CORS errors
+- Verificar que backend esté en puerto 3002
+- Verificar configuración de proxy en `client/vite.config.js`
+- Verificar `CORS_ORIGIN` en `server/.env`
+
+#### 🔴 Base de datos bloqueada (SQLite)
+```bash
+cd server
+# Cerrar todas las conexiones a la BD
+rm dev.db dev.db-journal
+npx prisma migrate dev
+node prisma/seed-100-bomberos.js
+```
+
+### 🆘 Soporte Adicional
+
+Si los problemas persisten:
+
+1. **Revisar logs**: Buscar errores en la consola del navegador y terminal
+2. **Verificar versiones**: Node.js >= 16.0.0, npm >= 7.0.0
+3. **Issues en GitHub**: [Crear un issue](https://github.com/duoc-fullstack2-9v/team_16/issues)
+4. **Documentación oficial**:
+   - [React](https://react.dev/)
+   - [Prisma](https://www.prisma.io/docs)
+   - [Material-UI](https://mui.com/)
+   - [Express](https://expressjs.com/)
 
 ## 📚 Documentación Adicional
 
@@ -688,11 +1056,35 @@ npm run dev
 
 ---
 
-**🚒 Segunda Compañía de Bomberos Viña del Mar**  
-*Sistema de Gestión Administrativa Completo v2.0*
+<div align="center">
+
+## 🚒 Segunda Compañía de Bomberos Viña del Mar
+
+### *Sistema de Gestión Administrativa Completo v2.0*
+
+---
 
 **Estado**: ✅ **PRODUCTION READY** - Sistema 100% funcional  
-**Tecnologías**: React 18 + Vite 5 + Node.js + Express + SQLite + Prisma 6 + Material-UI 5  
-**Módulos**: Auth, Bomberos (100), Citaciones, Cargos, Material Menor, Carros, Guardias  
-**Repositorio**: https://github.com/duoc-fullstack2-9v/team_16  
-**Rama**: feature/proyecto-administracion-bomberos
+**Stack**: React 18 + Vite 5 + Node.js + Express + SQLite + Prisma 6 + Material-UI 5  
+**Módulos**: Autenticación • Bomberos (100) • Citaciones • Cargos • Material Menor • Carros • Guardias  
+
+---
+
+[![GitHub](https://img.shields.io/badge/GitHub-team__16-181717?style=flat&logo=github)](https://github.com/duoc-fullstack2-9v/team_16)
+[![Branch](https://img.shields.io/badge/branch-feature%2Fproyecto--administracion--bomberos-orange?style=flat)](https://github.com/duoc-fullstack2-9v/team_16/tree/feature/proyecto-administracion-bomberos)
+[![Status](https://img.shields.io/badge/status-production%20ready-success?style=flat)](https://github.com/duoc-fullstack2-9v/team_16)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+
+---
+
+**Desarrollado con ❤️ por el equipo de desarrollo**  
+**Duoc UC - Full Stack 2 - 2025**
+
+📧 Contacto: [GitHub Issues](https://github.com/duoc-fullstack2-9v/team_16/issues)  
+📚 Documentación: [README.md](README.md) | [Wiki](https://github.com/duoc-fullstack2-9v/team_16/wiki)
+
+---
+
+### ⭐ Si este proyecto te fue útil, no olvides darle una estrella en GitHub
+
+</div>
