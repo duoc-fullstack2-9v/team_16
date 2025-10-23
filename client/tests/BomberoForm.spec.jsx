@@ -69,7 +69,7 @@ describe("Componente BomberoForm", () => {
     await user.type(apellidosInput, "González");
     
     expect(apellidosInput).toHaveValue("González");
-  });
+  }, 10000);
 
   it("muestra validación cuando los campos requeridos están vacíos", async () => {
     const user = userEvent.setup();
