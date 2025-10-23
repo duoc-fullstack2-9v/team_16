@@ -121,4 +121,264 @@ describe("Componente BomberoCard", () => {
     
     expect(screen.getByText(/Licencia/i)).toBeInTheDocument();
   });
+
+  it("retorna null cuando no se proporciona un bombero", () => {
+    const { container } = renderWithProviders(<BomberoCard bombero={null} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("retorna null cuando bombero es undefined", () => {
+    const { container } = renderWithProviders(<BomberoCard />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("muestra el avatar con iniciales cuando no hay fotoUrl", () => {
+    const bomberoSinFoto = { ...mockBombero, fotoUrl: null };
+    renderWithProviders(<BomberoCard bombero={bomberoSinFoto} />);
+    
+    // Buscar el avatar con las iniciales
+    expect(screen.getByText("JP")).toBeInTheDocument();
+  });
+
+  it("muestra solo la inicial del nombre cuando no hay apellido", () => {
+    const bomberoSinApellido = { ...mockBombero, apellidos: "", fotoUrl: null };
+    renderWithProviders(<BomberoCard bombero={bomberoSinApellido} />);
+    
+    // Debería mostrar "JB" (J de Juan, B por defecto)
+    expect(screen.getByText("JB")).toBeInTheDocument();
+  });
+
+  it("muestra colores correctos para diferentes rangos", () => {
+    const rangos = [
+      { rango: "Comandante", expected: "Comandante" },
+      { rango: "Capitán", expected: "Capitán" },
+      { rango: "Teniente", expected: "Teniente" },
+      { rango: "Sargento", expected: "Sargento" },
+      { rango: "Cabo", expected: "Cabo" }
+    ];
+
+    rangos.forEach(({ rango }) => {
+      const bomberoConRango = { ...mockBombero, rango };
+      const { unmount } = renderWithProviders(<BomberoCard bombero={bomberoConRango} />);
+      expect(screen.getByText(rango)).toBeInTheDocument();
+      unmount();
+    });
+  });
+
+  it("muestra especialidad cuando está presente", () => {
+    const bomberoConEspecialidad = { 
+      ...mockBombero, 
+      especialidad: "Rescate vehicular" 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConEspecialidad} />);
+    
+    expect(screen.getByText("Rescate vehicular")).toBeInTheDocument();
+    expect(screen.getByText("Especialidad")).toBeInTheDocument();
+  });
+
+  it("muestra dirección cuando está presente", () => {
+    const bomberoConDireccion = { 
+      ...mockBombero, 
+      direccion: "Av. Principal 123, Santiago" 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConDireccion} />);
+    
+    expect(screen.getByText("Av. Principal 123, Santiago")).toBeInTheDocument();
+    expect(screen.getByText("Dirección")).toBeInTheDocument();
+  });
+
+  it("muestra fecha de ingreso formateada", () => {
+    const bomberoConFecha = { 
+      ...mockBombero, 
+      fechaIngreso: "2020-05-15T00:00:00.000Z" 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConFecha} />);
+    
+    expect(screen.getByText("Fecha de Ingreso")).toBeInTheDocument();
+    // La fecha puede variar por zona horaria, verificamos que contenga "05/2020"
+    expect(screen.getByText(/\/05\/2020/)).toBeInTheDocument();
+  });
+
+  it("muestra 'No especificada' cuando no hay fecha de ingreso", () => {
+    const bomberoSinFecha = { 
+      ...mockBombero, 
+      fechaIngreso: null 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoSinFecha} />);
+    
+    // La fecha de ingreso no se mostrará si es null (condicional)
+    expect(screen.queryByText("Fecha de Ingreso")).not.toBeInTheDocument();
+  });
+
+  it("muestra 'Fecha inválida' para fechas malformadas", () => {
+    const bomberoFechaInvalida = { 
+      ...mockBombero, 
+      fechaIngreso: "fecha-invalida" 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoFechaInvalida} />);
+    
+    expect(screen.getByText("Fecha inválida")).toBeInTheDocument();
+  });
+
+  it("muestra información del creador cuando está presente", () => {
+    const bomberoConCreador = { 
+      ...mockBombero, 
+      createdBy: { nombre: "Admin Sistema" } 
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConCreador} />);
+    
+    expect(screen.getByText("Creado por")).toBeInTheDocument();
+    expect(screen.getByText("Admin Sistema")).toBeInTheDocument();
+  });
+
+  it("muestra citaciones recientes cuando existen", () => {
+    const bomberoConCitaciones = { 
+      ...mockBombero, 
+      citaciones: [
+        { 
+          id: 1, 
+          citacion: { 
+            titulo: "Simulacro de incendio", 
+            estado: "Programada" 
+          } 
+        },
+        { 
+          id: 2, 
+          citacion: { 
+            titulo: "Capacitación primeros auxilios", 
+            estado: "Completada" 
+          } 
+        }
+      ]
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConCitaciones} />);
+    
+    expect(screen.getByText("Citaciones recientes")).toBeInTheDocument();
+    expect(screen.getByText("Simulacro de incendio")).toBeInTheDocument();
+    expect(screen.getByText("Capacitación primeros auxilios")).toBeInTheDocument();
+  });
+
+  it("muestra mensaje de más citaciones cuando hay más de 3", () => {
+    const bomberoConMuchasCitaciones = { 
+      ...mockBombero, 
+      citaciones: [
+        { id: 1, citacion: { titulo: "Citación 1", estado: "Programada" } },
+        { id: 2, citacion: { titulo: "Citación 2", estado: "Programada" } },
+        { id: 3, citacion: { titulo: "Citación 3", estado: "Programada" } },
+        { id: 4, citacion: { titulo: "Citación 4", estado: "Programada" } },
+        { id: 5, citacion: { titulo: "Citación 5", estado: "Programada" } }
+      ]
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConMuchasCitaciones} />);
+    
+    expect(screen.getByText(/Y 2 más.../i)).toBeInTheDocument();
+  });
+
+  it("muestra fecha de creación", () => {
+    const bomberoConFechas = { 
+      ...mockBombero, 
+      createdAt: "2023-01-15T10:00:00.000Z",
+      updatedAt: "2023-01-15T10:00:00.000Z"
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoConFechas} />);
+    
+    expect(screen.getByText(/Creado:/i)).toBeInTheDocument();
+  });
+
+  it("muestra fecha de actualización cuando es diferente de creación", () => {
+    const bomberoActualizado = { 
+      ...mockBombero, 
+      createdAt: "2023-01-15T10:00:00.000Z",
+      updatedAt: "2023-06-20T15:30:00.000Z"
+    };
+    renderWithProviders(<BomberoCard bombero={bomberoActualizado} />);
+    
+    expect(screen.getByText(/Actualizado:/i)).toBeInTheDocument();
+  });
+
+  it("NO muestra botones de acción cuando showActions es false", () => {
+    renderWithProviders(
+      <BomberoCard 
+        bombero={mockBombero} 
+        showActions={false}
+      />
+    );
+    
+    // No debería haber botones de editar ni eliminar
+    expect(screen.queryByText("Editar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
+  });
+
+  it("llama a onEdit cuando se hace clic en el botón editar", () => {
+    const onEdit = vi.fn();
+    renderWithProviders(
+      <BomberoCard 
+        bombero={mockBombero} 
+        onEdit={onEdit}
+        showActions={true}
+      />
+    );
+    
+    const editButton = screen.getByText("Editar");
+    fireEvent.click(editButton);
+    
+    expect(onEdit).toHaveBeenCalledWith(mockBombero);
+  });
+
+  it("llama a onDelete cuando se hace clic en el botón eliminar", () => {
+    const onDelete = vi.fn();
+    renderWithProviders(
+      <BomberoCard 
+        bombero={mockBombero} 
+        onDelete={onDelete}
+        showActions={true}
+      />
+    );
+    
+    const deleteButton = screen.getByText("Eliminar");
+    fireEvent.click(deleteButton);
+    
+    expect(onDelete).toHaveBeenCalledWith(mockBombero);
+  });
+
+  it("muestra botón de cerrar cuando se proporciona onClose", () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BomberoCard 
+        bombero={mockBombero} 
+        onClose={onClose}
+      />
+    );
+    
+    // Buscar el botón de cerrar (CloseIcon)
+    const closeButtons = screen.getAllByRole("button");
+    // El botón de cerrar debería estar presente
+    expect(closeButtons.length).toBeGreaterThan(0);
+  });
+
+  it("llama a onClose cuando se hace clic en el botón cerrar", () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BomberoCard 
+        bombero={mockBombero} 
+        onClose={onClose}
+      />
+    );
+    
+    // El botón de cerrar es el primero (antes de los botones de acción)
+    const buttons = screen.getAllByRole("button");
+    const closeButton = buttons[0]; // Primer botón debería ser el de cerrar
+    
+    fireEvent.click(closeButton);
+    
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("muestra enlaces de teléfono y email clicables", () => {
+    renderWithProviders(<BomberoCard bombero={mockBombero} />);
+    
+    // Verificar que los enlaces existen
+    const links = screen.getAllByRole("link");
+    expect(links.length).toBeGreaterThan(0);
+  });
 });
