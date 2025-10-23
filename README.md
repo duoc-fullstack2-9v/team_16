@@ -312,21 +312,15 @@ git checkout feature/proyecto-administracion-bomberos
 # 2️⃣ Instalar todas las dependencias (root, client, server)
 npm install
 
-# 3️⃣ Configurar variables de entorno del backend
+# 3️⃣ Configurar base de datos SQLite (el .env ya está incluido en el repo)
 cd server
-# Windows PowerShell:
-Copy-Item .env.example .env
-# Linux/Mac:
-cp .env.example .env
-
-# 4️⃣ Configurar base de datos SQLite
 npx prisma migrate dev      # Crea BD y aplica migraciones
 npx prisma generate          # Genera cliente Prisma
 
-# 5️⃣ Cargar datos de prueba (100 bomberos + material + carros)
+# 4️⃣ Cargar datos de prueba (100 bomberos + material + carros)
 node prisma/seed-100-bomberos.js
 
-# 6️⃣ Volver a la raíz e iniciar ambos servidores
+# 5️⃣ Volver a la raíz e iniciar ambos servidores
 cd ..
 npm run dev
 ```
@@ -357,16 +351,13 @@ npm run dev          # Puerto 3002
 
 ### ⚠️ Problema Común: Error "Error interno del servidor"
 
-Si al iniciar ves errores 500 en el login:
+Si al iniciar ves errores 500 en el login, probablemente la base de datos no está configurada:
 
 ```bash
-# El problema es que falta el archivo .env
+# El archivo .env ya está incluido en el repo, solo necesitas:
 cd server
-Copy-Item .env.example .env   # Windows
-# o
-cp .env.example .env          # Linux/Mac
 
-# Luego crear/migrar la base de datos
+# Crear/migrar la base de datos
 npx prisma migrate dev
 node prisma/seed-100-bomberos.js
 
@@ -374,6 +365,8 @@ node prisma/seed-100-bomberos.js
 cd ..
 npm run dev
 ```
+
+**Nota:** El archivo `.env` está incluido en el repositorio porque contiene únicamente configuración de desarrollo local con datos simulados. En un proyecto real de producción, NUNCA se debe versionar el `.env`.
 
 ### ✅ Verificar Instalación
 
