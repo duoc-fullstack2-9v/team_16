@@ -1,0 +1,45 @@
+{
+  "name": "sistema-bomberos-fullstack",
+  "version": "1.0.0",
+  "description": "Sistema Administrativo de Bomberos - React + Node.js + MySQL",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install",
+    "install:all": "npm install && npm run install:client && npm run install:server",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "prisma:studio": "cd server && npm run prisma:studio",
+    "prisma:migrate": "cd server && npm run prisma:migrate",
+    "prisma:generate": "cd server && npm run prisma:generate"
+  },
+  "keywords": [
+    "bomberos",
+    "react",
+    "nodejs",
+    "express",
+    "mysql",
+    "prisma",
+    "jwt",
+    "material-ui"
+  ],
+  "author": "Sistema Bomberos",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  }
+}

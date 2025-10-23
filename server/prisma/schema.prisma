@@ -1,0 +1,503 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Modelo de usuarios del sistema
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       String   // Comandante, Capitán, Teniente, Sargento, Bombero
+  tipo      String   @default("usuario") // 'admin' o 'usuario'
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  bomberosCreados Bombero[] @relation("BomberoCreatedBy")
+  citacionesCreadas Citacion[] @relation("CitacionCreatedBy")
+  citacionesBombero BomberoCitacion[]
+  carrosCreados Carro[]
+  historialCarros HistorialCarro[]
+  historialCajoneras HistorialCajonera[]
+  guardiasMensualesCreadas GuardiaMensual[] @relation("GuardiaMensualCreatedBy")
+  guardiasNocturnasAsignadas GuardiaDiaBombero[]
+  plantillasCreadas PlantillaGuardia[] @relation("PlantillaGuardiaCreatedBy")
+
+  @@map("users")
+}
+
+// Modelo de bomberos
+model Bombero {
+  id          Int      @id @default(autoincrement())
+  nombres     String
+  apellidos   String
+  rango       String   // Bombero, Cabo, Sargento, etc.
+  especialidad String?
+  estado      String   @default("Activo") // Activo, Licencia, Inactivo
+  telefono    String?
+  email       String?
+  direccion   String?
+  fechaIngreso DateTime?
+  fotoUrl     String?  // URL de la foto del bombero
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById Int?
+
+  // Relaciones
+  createdBy   User? @relation("BomberoCreatedBy", fields: [createdById], references: [id])
+  citaciones  BomberoCitacion[]
+  asignacionesCargo AsignacionCargo[]
+  asignacionesMaterial AsignacionMaterial[]
+  conductorHabilitado ConductorHabilitado[]
+  guardiasNocturnas GuardiaDiaBombero[]
+  plantillasGuardias PlantillaDiaBombero[]
+
+  @@map("bomberos")
+}
+
+// Modelo de cargos de la compañía (Director, Secretario, etc.)
+model Cargo {
+  id              Int       @id @default(autoincrement())
+  nombre          String    @unique  // "Director", "Secretario", "Tesorero", etc.
+  descripcion     String?   // Descripción del cargo
+  rama            String    // "ADMINISTRATIVA", "OPERATIVA", "CONSEJOS"
+  jerarquia       Int       // Orden jerárquico dentro de la rama (1=más alto)
+  maxOcupantes    Int       @default(1) // Número máximo de ocupantes (1 para la mayoría, 4 para Consejeros)
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relación con asignaciones
+  asignaciones    AsignacionCargo[]
+
+  @@map("cargos")
+}
+
+// Modelo de asignación de cargos a bomberos (con historial)
+model AsignacionCargo {
+  id              Int       @id @default(autoincrement())
+  cargoId         Int
+  bomberoId       Int
+  fechaInicio     DateTime  @default(now())
+  fechaFin        DateTime? // null = aún activo en el cargo
+  periodoAnio     Int       // Año del período (ej: 2025)
+  activo          Boolean   @default(true) // true = asignación actual, false = historial
+  observaciones   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  cargo           Cargo     @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  bombero         Bombero   @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@map("asignaciones_cargos")
+}
+
+// Modelo de citaciones
+model Citacion {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  fecha       DateTime
+  hora        String
+  lugar       String
+  motivo      String
+  estado      String   @default("Programada") // Programada, Realizada, Cancelada
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById Int?
+
+  // Relaciones
+  createdBy   User? @relation("CitacionCreatedBy", fields: [createdById], references: [id])
+  bomberos    BomberoCitacion[]
+
+  @@map("citaciones")
+}
+
+// Tabla intermedia para la relación many-to-many entre Bomberos y Citaciones
+model BomberoCitacion {
+  id         Int     @id @default(autoincrement())
+  bomberoId  Int
+  citacionId Int
+  asistio    Boolean @default(false)
+  observaciones String?
+  createdAt  DateTime @default(now())
+
+  // Relaciones
+  bombero    Bombero  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  citacion   Citacion @relation(fields: [citacionId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     Int?
+
+  @@unique([bomberoId, citacionId])
+  @@map("bomberos_citaciones")
+}
+
+// Modelo para solicitudes/permisos
+model Solicitud {
+  id          Int      @id @default(autoincrement())
+  tipo        String   // Permiso, Licencia, Cambio de horario, etc.
+  descripcion String
+  estado      String   @default("Pendiente") // Pendiente, Aprobada, Rechazada
+  fechaSolicitud DateTime @default(now())
+  fechaRespuesta DateTime?
+  observaciones String?
+  solicitanteId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("solicitudes")
+}
+
+// Modelo para eventos/actividades
+model Evento {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  fecha       DateTime
+  lugar       String?
+  tipo        String   // Entrenamiento, Evento social, Ceremonia, etc.
+  estado      String   @default("Programado")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("eventos")
+}
+
+// Modelo para el historial de acciones/logs
+model Log {
+  id        Int      @id @default(autoincrement())
+  accion    String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  tabla     String?  // bomberos, citaciones, usuarios, etc.
+  registroId Int?    // ID del registro afectado
+  usuarioId Int?
+  detalles  String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("logs")
+}
+
+// ==================== MATERIAL MENOR ====================
+
+// Modelo de categorías de material menor (jerárquicas)
+model Categoria {
+  id              Int       @id @default(autoincrement())
+  nombre          String    @unique
+  descripcion     String?
+  icono           String?   // Nombre del ícono de Material-UI o URL de imagen
+  parentId        Int?      // Categoría padre (null = raíz)
+  activo          Boolean   @default(true) // Soft delete
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  parent          Categoria?  @relation("CategoriasJerarquia", fields: [parentId], references: [id])
+  subcategorias   Categoria[] @relation("CategoriasJerarquia")
+  materiales      Material[]
+
+  @@map("categorias")
+}
+
+// Modelo de material menor (inventario)
+model Material {
+  id                  Int       @id @default(autoincrement())
+  nombre              String
+  descripcion         String?
+  fotoUrl             String?
+  categoriaId         Int?
+  estado              String    @default("Disponible") // Disponible, En Uso, Mantenimiento, Baja
+  tipo                String    // "individual" o "cantidad"
+  numeroSerie         String?   // Solo para tipo "individual"
+  cantidad            Int?      // Solo para tipo "cantidad"
+  unidadMedida        String?   // "unidades", "metros", "kilogramos", etc.
+  fechaAdquisicion    DateTime?
+  ubicacionFisica     String?   // "Bodega A", "Carro 1", "Oficina"
+  fechaVencimiento    DateTime? // Para material con fecha de vencimiento
+  fechaMantencion     DateTime? // Próxima fecha de mantención programada
+  observaciones       String?
+  activo              Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Relaciones
+  categoria           Categoria?            @relation(fields: [categoriaId], references: [id])
+  asignaciones        AsignacionMaterial[]
+
+  @@map("material")
+}
+
+// Modelo de asignaciones de material a bomberos (con historial completo)
+model AsignacionMaterial {
+  id              Int       @id @default(autoincrement())
+  materialId      Int
+  bomberoId       Int?      // Asignado a bombero (opcional)
+  carroId         Int?      // Si está asignado a un carro
+  cajoneraId      Int?      // Si está dentro de una cajonera específica (opcional)
+  fechaAsignacion DateTime  @default(now())
+  fechaDevolucion DateTime? // null = aún asignado
+  motivo          String?   // Razón de la asignación
+  observaciones   String?
+  cantidadAsignada Int?     // Solo para material tipo "cantidad"
+  activo          Boolean   @default(true) // true = asignación actual, false = historial
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  material        Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  bombero         Bombero?  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  carro           Carro?    @relation("AsignacionMaterialCarro", fields: [carroId], references: [id], onDelete: Cascade)
+  cajonera        Cajonera? @relation(fields: [cajoneraId], references: [id], onDelete: SetNull)
+
+  @@map("asignaciones_material")
+}
+
+// ============================================
+// MÓDULO: MATERIAL MAYOR (CARROS DE BOMBEROS)
+// ============================================
+
+model Carro {
+  id                      Int       @id @default(autoincrement())
+  
+  // Datos básicos
+  nombre                  String    // "Carro 1", "Bomba B1", "Escala E2"
+  tipo                    String    // "Bomba", "Escala", "Rescate", "Ambulancia", "Forestal"
+  marca                   String?   // "Mercedes-Benz", "Scania"
+  modelo                  String?   // "Atego 1725"
+  anioFabricacion         Int?
+  patente                 String    @unique // "XXXX-00"
+  estadoOperativo         String    @default("Operativo") // Operativo, Mantenimiento, Fuera de servicio
+  
+  // Detalles técnicos operativos (campos fijos principales)
+  capacidadAgua           Int?      // Litros
+  capacidadEspuma         Int?      // Litros
+  potenciaMotobomba       String?   // "500 GPM", "2000 L/min"
+  capacidadMotobomba      String?   // Descripción de capacidad
+  capacidadCarga          String?   // "2 toneladas", "8 personas"
+  
+  // Mantenimiento y documentación
+  fechaProximaMantencion  DateTime?
+  fechaRevisionTecnica    DateTime?
+  fechaPermisoCirculacion DateTime?
+  
+  // Características personalizables (JSON)
+  caracteristicas         Json?     // { "altura_maxima": "30m", "peso": "12000kg", etc }
+  
+  // Observaciones
+  observaciones           String?
+  
+  // Control
+  activo                  Boolean   @default(true)
+  creadoPor               Int?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  // Relaciones
+  cajoneras               Cajonera[]
+  asignacionesMaterial    AsignacionMaterial[] @relation("AsignacionMaterialCarro")
+  conductoresHabilitados  ConductorHabilitado[]
+  mantenciones            MantencionCarro[]
+  historial               HistorialCarro[]
+  creador                 User?     @relation(fields: [creadoPor], references: [id])
+
+  @@map("carros")
+}
+
+model Cajonera {
+  id              Int       @id @default(autoincrement())
+  carroId         Int
+  nombre          String    // "Cajonera 1 - Lado Izquierdo", "Compartimento Superior"
+  estado          String    @default("Operativa") // Operativa, Dañada, En reparación
+  observaciones   String?
+  posicion        Int?      // Orden visual (opcional)
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  carro           Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  materiales      AsignacionMaterial[]
+  historial       HistorialCajonera[]
+
+  @@map("cajoneras")
+}
+
+model ConductorHabilitado {
+  id          Int       @id @default(autoincrement())
+  carroId     Int
+  bomberoId   Int
+  fechaDesde  DateTime  @default(now())
+  fechaHasta  DateTime? // Null = indefinido
+  observaciones String?
+  activo      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relaciones
+  carro       Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  bombero     Bombero   @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@unique([carroId, bomberoId])
+  @@map("conductores_habilitados")
+}
+
+model MantencionCarro {
+  id                Int       @id @default(autoincrement())
+  carroId           Int
+  tipo              String    // "Mecánica", "Revisión Técnica", "Permiso Circulación", "Preventiva", "Correctiva"
+  descripcion       String
+  fechaRealizada    DateTime
+  proximaFecha      DateTime?
+  costo             Float?    // Costo en moneda local
+  realizadoPor      String?   // Taller, mecánico, etc.
+  observaciones     String?
+  documentos        Json?     // URLs de documentos/facturas
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones
+  carro             Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+
+  @@map("mantenciones_carro")
+}
+
+model HistorialCarro {
+  id          Int       @id @default(autoincrement())
+  carroId     Int
+  tipo        String    // "CREACION", "ACTUALIZACION", "ASIGNACION_MATERIAL", "MANTENCION", "CAMBIO_ESTADO"
+  descripcion String
+  cambios     Json?     // Detalle de cambios realizados
+  usuarioId   Int?
+  createdAt   DateTime  @default(now())
+  
+  // Relaciones
+  carro       Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  usuario     User?     @relation(fields: [usuarioId], references: [id])
+
+  @@map("historial_carro")
+}
+
+model HistorialCajonera {
+  id          Int       @id @default(autoincrement())
+  cajoneraId  Int
+  tipo        String    // "CREACION", "ACTUALIZACION", "CAMBIO_ESTADO"
+  descripcion String
+  cambios     Json?
+  usuarioId   Int?
+  createdAt   DateTime  @default(now())
+  
+  // Relaciones
+  cajonera    Cajonera  @relation(fields: [cajoneraId], references: [id], onDelete: Cascade)
+  usuario     User?     @relation(fields: [usuarioId], references: [id])
+
+  @@map("historial_cajonera")
+}
+
+// ============================================
+// MÓDULO: GUARDIA NOCTURNA
+// ============================================
+
+model GuardiaMensual {
+  id             Int            @id @default(autoincrement())
+  mes            Int
+  anio           Int
+  minimoBomberos Int            @default(4)
+  notas          String?
+  creadoPorId    Int?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  creadoPor      User?          @relation("GuardiaMensualCreatedBy", fields: [creadoPorId], references: [id])
+  dias           GuardiaDia[]
+
+  @@unique([mes, anio])
+  @@map("guardias_mensuales")
+}
+
+model GuardiaDia {
+  id               Int                 @id @default(autoincrement())
+  fecha            DateTime
+  notas            String?
+  guardiaMensualId Int
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  guardiaMensual   GuardiaMensual      @relation(fields: [guardiaMensualId], references: [id], onDelete: Cascade)
+  bomberos         GuardiaDiaBombero[]
+
+  @@unique([guardiaMensualId, fecha])
+  @@map("guardias_dias")
+}
+
+model GuardiaDiaBombero {
+  id            Int           @id @default(autoincrement())
+  guardiaDiaId  Int
+  bomberoId     Int
+  comentario    String?
+  asignadoPorId Int?
+  createdAt     DateTime      @default(now())
+
+  guardiaDia    GuardiaDia    @relation(fields: [guardiaDiaId], references: [id], onDelete: Cascade)
+  bombero       Bombero       @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  asignadoPor   User?         @relation(fields: [asignadoPorId], references: [id])
+
+  @@unique([guardiaDiaId, bomberoId])
+  @@map("guardias_dias_bomberos")
+}
+
+// ============================================
+// PLANTILLAS DE GUARDIA NOCTURNA
+// ============================================
+
+model PlantillaGuardia {
+  id             Int                  @id @default(autoincrement())
+  nombre         String               @unique
+  descripcion    String?
+  tipo           String               // "por_fecha" (día del mes 1-31) o "por_dia_semana" (Lunes-Domingo)
+  creadoPorId    Int?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  creadoPor      User?                @relation("PlantillaGuardiaCreatedBy", fields: [creadoPorId], references: [id])
+  dias           PlantillaDia[]
+
+  @@map("plantillas_guardia")
+}
+
+model PlantillaDia {
+  id              Int                    @id @default(autoincrement())
+  plantillaId     Int
+  diaNumero       Int?                   // 1-31 para tipo "por_fecha", null para "por_dia_semana"
+  diaSemana       Int?                   // 0=Domingo, 1=Lunes...6=Sábado para tipo "por_dia_semana", null para "por_fecha"
+  notas           String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  plantilla       PlantillaGuardia       @relation(fields: [plantillaId], references: [id], onDelete: Cascade)
+  bomberos        PlantillaDiaBombero[]
+
+  @@map("plantillas_dias")
+}
+
+model PlantillaDiaBombero {
+  id              Int           @id @default(autoincrement())
+  plantillaDiaId  Int
+  bomberoId       Int
+  createdAt       DateTime      @default(now())
+
+  plantillaDia    PlantillaDia  @relation(fields: [plantillaDiaId], references: [id], onDelete: Cascade)
+  bombero         Bombero       @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@unique([plantillaDiaId, bomberoId])
+  @@map("plantillas_dias_bomberos")
+}

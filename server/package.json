@@ -1,0 +1,44 @@
+{
+  "name": "sistema-bomberos-server",
+  "version": "1.0.0",
+  "description": "Backend del Sistema Administrativo de Bomberos",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "build": "echo 'No build step needed for Node.js'",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset",
+    "prisma:seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "pdfkit": "^0.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "prisma": "^6.17.1"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "prisma",
+    "mysql",
+    "jwt",
+    "bomberos"
+  ],
+  "author": "Sistema Bomberos",
+  "license": "MIT"
+}
