@@ -312,19 +312,21 @@ git checkout feature/proyecto-administracion-bomberos
 # 2️⃣ Instalar todas las dependencias (root, client, server)
 npm install
 
-# 3️⃣ Configurar variables de entorno
+# 3️⃣ Configurar variables de entorno del backend
 cd server
+# Windows PowerShell:
+Copy-Item .env.example .env
+# Linux/Mac:
 cp .env.example .env
-# Editar .env si es necesario (valores por defecto funcionan)
 
-# 4️⃣ Configurar base de datos
-npx prisma migrate dev      # Aplica migraciones
+# 4️⃣ Configurar base de datos SQLite
+npx prisma migrate dev      # Crea BD y aplica migraciones
 npx prisma generate          # Genera cliente Prisma
 
 # 5️⃣ Cargar datos de prueba (100 bomberos + material + carros)
 node prisma/seed-100-bomberos.js
 
-# 6️⃣ Volver a la raíz e iniciar la aplicación
+# 6️⃣ Volver a la raíz e iniciar ambos servidores
 cd ..
 npm run dev
 ```
@@ -340,11 +342,37 @@ npm run dev          # Puerto 5173
 # Server (Backend) - En otra terminal
 cd server
 npm install
+
+# ⚠️ IMPORTANTE: Crear archivo .env
+# Windows PowerShell:
+Copy-Item .env.example .env
+# Linux/Mac:
 cp .env.example .env
+
 npx prisma migrate dev
 npx prisma generate
 node prisma/seed-100-bomberos.js
 npm run dev          # Puerto 3002
+```
+
+### ⚠️ Problema Común: Error "Error interno del servidor"
+
+Si al iniciar ves errores 500 en el login:
+
+```bash
+# El problema es que falta el archivo .env
+cd server
+Copy-Item .env.example .env   # Windows
+# o
+cp .env.example .env          # Linux/Mac
+
+# Luego crear/migrar la base de datos
+npx prisma migrate dev
+node prisma/seed-100-bomberos.js
+
+# Reiniciar servidor
+cd ..
+npm run dev
 ```
 
 ### ✅ Verificar Instalación
