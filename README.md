@@ -69,13 +69,13 @@ cd .. && npm run dev
 
 **Estado**: ✅ **SISTEMA COMPLETO Y FUNCIONAL** | **PRODUCTION READY**
 
-**Última actualización**: 16 de Octubre, 2025
+**Última actualización**: 23 de Octubre, 2025
 
 ### Características Principales:
 - ✅ **100 Bomberos** con datos reales cargados
 - ✅ **8 Módulos** completamente funcionales
 - ✅ **60+ Endpoints** API REST implementados
-- ✅ **15 Modelos** de base de datos relacionados
+- ✅ **24 Modelos** de base de datos relacionados
 - ✅ **JWT Authentication** con seguridad completa
 - ✅ **Material Mayor** (4 carros) + **Material Menor** (categorizado)
 - ✅ **Sistema de Guardias** nocturnas con plantillas
@@ -145,7 +145,7 @@ graph TB
                               ↕ Prisma Client
 ┌─────────────────────────────────────────────────────────────┐
 │                    💾 CAPA DE DATOS                          │
-│  Prisma ORM + SQLite | 15 Modelos | Migraciones             │
+│  Prisma ORM + SQLite | 24 Modelos | Migraciones             │
 │  Relaciones: Many-to-Many, One-to-Many, Jerárquicas         │
 └─────────────────────────────────────────────────────────────┘
                               ↕ SQL Queries
@@ -174,7 +174,7 @@ graph TB
 │   │   ├── middleware/    # Auth JWT + validaciones
 │   │   └── utils/         # Helpers de autenticación
 │   ├── prisma/
-│   │   ├── schema.prisma  # 15 modelos relacionados
+│   │   ├── schema.prisma  # 24 modelos relacionados
 │   │   ├── migrations/    # 10 migraciones aplicadas
 │   │   └── seed-100-bomberos.js  # Seed con datos
 │   └── .env               # Variables de entorno
@@ -691,7 +691,7 @@ server/
 │   │   └── auth.js         # ✅ Utilidades de autenticación
 │   └── index.js            # ✅ Servidor Express configurado
 ├── prisma/
-│   ├── schema.prisma       # ✅ Esquema completo (15 modelos)
+│   ├── schema.prisma       # ✅ Esquema completo (24 modelos)
 │   ├── seed.js             # ✅ Seed original (10 bomberos)
 │   ├── seed-100-bomberos.js # ✅ Seed nuevo (100 bomberos + material)
 │   └── migrations/         # ✅ 10 migraciones aplicadas
@@ -792,28 +792,30 @@ npx prisma migrate reset
 
 | Métrica | Valor | Descripción |
 |---------|-------|-------------|
-| 📁 **Archivos** | 101+ | Archivos de código implementados |
-| 📝 **Líneas de Código** | 31,751+ | Total de líneas escritas |
+| 📁 **Archivos** | 98 | Archivos de código y configuración (sin `node_modules` ni `dist`) |
+| 📝 **Líneas de Código** | 22,340 | Total de líneas (medición 23-oct-2025) |
 | 🚀 **Endpoints API** | 60+ | Endpoints REST funcionales |
-| 📄 **Páginas React** | 8 | Páginas principales del sistema |
+| 📄 **Páginas React** | 9 | Páginas principales del sistema |
 | 🧩 **Componentes** | 50+ | Componentes reutilizables |
-| 🗂️ **Modelos BD** | 15 | Tablas en base de datos |
+| 🗂️ **Modelos BD** | 24 | Modelos Prisma activos |
 | 🔄 **Redux Slices** | 9 | Slices de estado global |
 | 📦 **Migraciones** | 10 | Migraciones aplicadas |
-| 🖼️ **Assets** | 9 archivos | ~16MB de recursos |
+| 🖼️ **Assets** | 10 archivos | ~16MB de recursos |
 | ⚡ **Funcionalidad** | 100% | Sistema completamente funcional |
 | 👨‍🚒 **Bomberos** | 100 | Registros de bomberos cargados |
 | 🚛 **Carros** | 4 | Vehículos de emergencia |
 | 📋 **Cargos** | 12 | Cargos organizacionales |
 | 🧰 **Material Menor** | 8+ | Items de material catalogados |
 
+_Métricas actualizadas automáticamente con `Get-ChildItem` + `Measure-Object` el 23-oct-2025._
+
 ### Distribución del Código
 
 ```
-Frontend (React)     ██████████████░░░░░░  45%  ~14,200 líneas
-Backend (Node.js)    ████████████░░░░░░░░  38%  ~12,000 líneas
-Base de Datos        ████░░░░░░░░░░░░░░░░  12%  ~3,800 líneas
-Configuración        ██░░░░░░░░░░░░░░░░░░   5%  ~1,751 líneas
+Frontend (React)     ████████████████░░░░  55%  ~12,200 líneas
+Backend (Node.js)    █████████░░░░░░░░░░░  27%   ~6,100 líneas
+Base de Datos        ████░░░░░░░░░░░░░░░░  13%   ~3,000 líneas
+Configuración        ██░░░░░░░░░░░░░░░░░░   5%   ~1,000 líneas
 ```
 
 </div>
