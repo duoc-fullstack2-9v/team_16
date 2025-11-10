@@ -144,9 +144,24 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
     }
 
     try {
-      const submitData = {
-        ...formData,
-        fechaIngreso: formData.fechaIngreso ? formData.fechaIngreso.toISOString() : null
+      // Preparar datos para enviar
+      const submitData = { ...formData }
+      
+      // Convertir fechaIngreso al formato ISO correcto si existe
+      if (formData.fechaIngreso) {
+        try {
+          // Si es un string de fecha (YYYY-MM-DD del input), convertir a ISO
+          const fecha = new Date(formData.fechaIngreso)
+          if (!isNaN(fecha.getTime())) {
+            submitData.fechaIngreso = fecha.toISOString()
+          } else {
+            submitData.fechaIngreso = null
+          }
+        } catch (e) {
+          submitData.fechaIngreso = null
+        }
+      } else {
+        submitData.fechaIngreso = null
       }
 
       if (isEditing) {
@@ -155,12 +170,14 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
           data: submitData
         })).unwrap()
       } else {
+        console.log('📤 Datos a enviar:', submitData)
         await dispatch(createBombero(submitData)).unwrap()
       }
 
       onSuccess()
     } catch (error) {
-      console.error('Error al guardar bombero:', error)
+      console.error('❌ Error al guardar bombero:', error)
+      console.error('❌ Detalles del error:', JSON.stringify(error, null, 2))
     }
   }
 
@@ -431,10 +448,10 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
                   fullWidth
                   label="Fecha de Ingreso"
                   type="date"
-                  value={formData.fechaIngreso ? formData.fechaIngreso.split('T')[0] : ''}
+                  value={formData.fechaIngreso ? (typeof formData.fechaIngreso === 'string' ? formData.fechaIngreso.split('T')[0] : '') : ''}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
-                    fechaIngreso: e.target.value ? new Date(e.target.value).toISOString() : null
+                    fechaIngreso: e.target.value || null
                   }))}
                   InputLabelProps={{
                     shrink: true,

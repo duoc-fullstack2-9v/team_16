@@ -30,8 +30,10 @@ const bomberoSchema = Joi.object({
   estado: Joi.string().valid('Activo', 'Licencia', 'Inactivo').default('Activo').messages({
     'any.only': 'El estado debe ser: Activo, Licencia o Inactivo'
   }),
-  telefono: Joi.string().pattern(/^\+?[\d\s\-\(\)]{8,20}$/).optional().allow('').messages({
-    'string.pattern.base': 'El teléfono debe tener un formato válido'
+  telefono: Joi.string().min(8).max(25).pattern(/^[\+\d\s\-\(\)]+$/).optional().allow('').messages({
+    'string.pattern.base': 'El teléfono debe contener solo números, espacios, guiones, paréntesis o signo +',
+    'string.min': 'El teléfono debe tener al menos 8 caracteres',
+    'string.max': 'El teléfono no puede exceder 25 caracteres'
   }),
   email: Joi.string().email().optional().allow('').messages({
     'string.email': 'El email debe tener un formato válido'
@@ -41,6 +43,9 @@ const bomberoSchema = Joi.object({
   }),
   fechaIngreso: Joi.date().iso().optional().allow(null).messages({
     'date.base': 'La fecha de ingreso debe ser una fecha válida'
+  }),
+  fotoUrl: Joi.string().optional().allow('', null).messages({
+    'string.base': 'La URL de la foto debe ser un texto'
   })
 })
 
@@ -185,9 +190,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // POST /api/bomberos - Crear nuevo bombero
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('📥 Datos recibidos en el backend:', JSON.stringify(req.body, null, 2))
+    
     // Validar datos de entrada
     const { error, value } = bomberoSchema.validate(req.body)
     if (error) {
+      console.log('❌ Error de validación:', error.details.map(d => d.message))
       return res.status(400).json({
         success: false,
         message: 'Datos de entrada inválidos',
