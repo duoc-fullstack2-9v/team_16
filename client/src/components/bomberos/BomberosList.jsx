@@ -28,6 +28,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Phone as PhoneIcon,
+  SwapHoriz as SwapHorizIcon,
   Email as EmailIcon,
   Work as WorkIcon,
   FilterList as FilterIcon,
@@ -35,7 +36,8 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchBomberos, deleteBombero, setFilters, resetFilters, clearError } from '../../store/slices/bomberosSlice'
+import { fetchBomberos, deleteBombero, setFilters, resetFilters, clearError, cambiarEstadoBombero } from '../../store/slices/bomberosSlice'
+import CambiarEstadoDialog from './CambiarEstadoDialog'
 
 const BomberosList = ({ onEdit, onAdd, onView }) => {
   console.log('🚒 BomberosList rendering...')
@@ -49,6 +51,12 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
     filters,
     deleteLoading
   } = useSelector(state => state.bomberos)
+
+  // Estado para el diálogo de cambiar estado
+  const [cambiarEstadoDialog, setCambiarEstadoDialog] = useState({
+    open: false,
+    bombero: null
+  })
 
   console.log('🚒 BomberosList state:', { bomberos, loading, error, pagination, filters })
 
@@ -99,6 +107,47 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
       } catch (error) {
         console.error('Error al eliminar bombero:', error)
       }
+    }
+  }
+
+  // Handle cambiar estado
+  const handleOpenCambiarEstado = (bombero) => {
+    setCambiarEstadoDialog({
+      open: true,
+      bombero
+    })
+  }
+
+  const handleCloseCambiarEstado = () => {
+    setCambiarEstadoDialog({
+      open: false,
+      bombero: null
+    })
+  }
+
+  const handleConfirmCambioEstado = async (bomberoId, nuevoEstado, motivo, observaciones) => {
+    try {
+      await dispatch(cambiarEstadoBombero({
+        bomberoId,
+        nuevoEstado,
+        motivo,
+        observaciones
+      })).unwrap()
+      
+      // Close dialog
+      handleCloseCambiarEstado()
+      
+      // Refetch to update the list
+      dispatch(fetchBomberos({ 
+        page: pagination.current,
+        ...filters 
+      }))
+      
+      // Show success message (you can add a snackbar here if needed)
+      console.log('Estado cambiado exitosamente')
+    } catch (error) {
+      console.error('Error al cambiar estado:', error)
+      // You can add error notification here
     }
   }
 
@@ -331,6 +380,15 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title="Cambiar Estado">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenCambiarEstado(bombero)}
+                          color="warning"
+                        >
+                          <SwapHorizIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Eliminar">
                         <IconButton
                           size="small"
@@ -435,6 +493,14 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
       >
         <AddIcon />
       </Fab>
+
+      {/* Diálogo para cambiar estado */}
+      <CambiarEstadoDialog
+        open={cambiarEstadoDialog.open}
+        bombero={cambiarEstadoDialog.bombero}
+        onClose={handleCloseCambiarEstado}
+        onConfirm={handleConfirmCambioEstado}
+      />
     </Box>
   )
 }
