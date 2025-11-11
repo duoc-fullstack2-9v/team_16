@@ -241,10 +241,13 @@ const BomberosPage = () => {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Inactivos/Licencia
+                No Activos
               </Typography>
               <Typography variant="h4">
-                {statsLoading ? '...' : (stats.totalInactivos || 0)}
+                {statsLoading ? '...' : (stats.totalNoActivos || 0)}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Suspendidos: {stats.totalSuspendidos || 0} | Bajas: {stats.totalBajas || 0} | Renuncias: {stats.totalRenuncias || 0}
               </Typography>
             </CardContent>
           </Card>

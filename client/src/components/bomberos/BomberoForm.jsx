@@ -198,8 +198,9 @@ const BomberoForm = ({ bombero = null, onSuccess, onCancel }) => {
 
   const estados = [
     'Activo',
-    'Licencia',
-    'Inactivo'
+    'Suspendido',
+    'Dado de Baja',
+    'Renuncia'
   ]
 
   return (

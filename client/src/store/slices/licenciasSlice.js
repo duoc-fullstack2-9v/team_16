@@ -14,7 +14,7 @@ export const fetchTiposLicencia = createAsyncThunk(
   'licencias/fetchTiposLicencia',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.get(`${API_URL}/licencias/tipos-licencia`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -34,7 +34,7 @@ export const createTipoLicencia = createAsyncThunk(
   'licencias/createTipoLicencia',
   async (datos, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.post(`${API_URL}/licencias/tipos-licencia`, datos, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -54,7 +54,7 @@ export const fetchLicencias = createAsyncThunk(
   'licencias/fetchLicencias',
   async (params = {}, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.get(`${API_URL}/licencias`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
@@ -75,7 +75,7 @@ export const fetchEstadisticas = createAsyncThunk(
   'licencias/fetchEstadisticas',
   async (params = {}, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.get(`${API_URL}/licencias/estadisticas`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
@@ -96,7 +96,7 @@ export const fetchLicenciaById = createAsyncThunk(
   'licencias/fetchLicenciaById',
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.get(`${API_URL}/licencias/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -116,7 +116,7 @@ export const createLicencia = createAsyncThunk(
   'licencias/createLicencia',
   async (datos, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.post(`${API_URL}/licencias`, datos, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -136,7 +136,7 @@ export const updateLicencia = createAsyncThunk(
   'licencias/updateLicencia',
   async ({ id, datos }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.put(`${API_URL}/licencias/${id}`, datos, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -156,7 +156,7 @@ export const cancelLicencia = createAsyncThunk(
   'licencias/cancelLicencia',
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.delete(`${API_URL}/licencias/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -176,7 +176,7 @@ export const aprobarLicencia = createAsyncThunk(
   'licencias/aprobarLicencia',
   async ({ id, observacionesAdmin }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.post(
         `${API_URL}/licencias/${id}/aprobar`,
         { observacionesAdmin },
@@ -200,7 +200,7 @@ export const rechazarLicencia = createAsyncThunk(
   'licencias/rechazarLicencia',
   async ({ id, observacionesAdmin }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('bomberosToken');
       const response = await axios.post(
         `${API_URL}/licencias/${id}/rechazar`,
         { observacionesAdmin },

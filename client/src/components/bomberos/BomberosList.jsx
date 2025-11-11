@@ -112,8 +112,9 @@ const BomberosList = ({ onEdit, onAdd, onView }) => {
   const getStatusColor = (estado) => {
     switch (estado) {
       case 'Activo': return 'success'
-      case 'Licencia': return 'warning'
-      case 'Inactivo': return 'error'
+      case 'Suspendido': return 'warning'
+      case 'Dado de Baja': return 'error'
+      case 'Renuncia': return 'default'
       default: return 'default'
     }
   }

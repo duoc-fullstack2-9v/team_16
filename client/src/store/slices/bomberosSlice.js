@@ -92,6 +92,40 @@ export const deleteBombero = createAsyncThunk(
   }
 )
 
+// Cambiar estado de bombero
+export const cambiarEstadoBombero = createAsyncThunk(
+  'bomberos/cambiarEstado',
+  async ({ bomberoId, nuevoEstado, motivo, observaciones }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/bomberos/${bomberoId}/cambiar-estado`, {
+        nuevoEstado,
+        motivo,
+        observaciones
+      })
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Error al cambiar estado del bombero'
+      )
+    }
+  }
+)
+
+// Obtener historial de estados
+export const fetchHistorialEstados = createAsyncThunk(
+  'bomberos/fetchHistorialEstados',
+  async (bomberoId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/bomberos/${bomberoId}/historial-estados`)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Error al cargar historial de estados'
+      )
+    }
+  }
+)
+
 // Fetch estadísticas
 export const fetchBomberosStats = createAsyncThunk(
   'bomberos/fetchStats',
@@ -121,10 +155,17 @@ const initialState = {
   // Bombero seleccionado
   selectedBombero: null,
   
+  // Historial de estados
+  historialEstados: [],
+  historialLoading: false,
+  
   // Estadísticas
   stats: {
     totalActivos: 0,
-    totalInactivos: 0,
+    totalSuspendidos: 0,
+    totalBajas: 0,
+    totalRenuncias: 0,
+    totalNoActivos: 0,
     total: 0,
     porRango: [],
     nuevosUltimoMes: 0
@@ -286,6 +327,41 @@ const bomberosSlice = createSlice({
       })
       .addCase(fetchBomberosStats.rejected, (state, action) => {
         state.statsLoading = false
+        state.error = action.payload
+      })
+
+      // Cambiar estado de bombero
+      .addCase(cambiarEstadoBombero.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(cambiarEstadoBombero.fulfilled, (state, action) => {
+        state.loading = false
+        // Actualizar el bombero en la lista
+        const index = state.bomberos.findIndex(b => b.id === action.payload.data.id)
+        if (index !== -1) {
+          state.bomberos[index] = action.payload.data
+        }
+        // Actualizar el bombero seleccionado si es el mismo
+        if (state.selectedBombero?.id === action.payload.data.id) {
+          state.selectedBombero = action.payload.data
+        }
+      })
+      .addCase(cambiarEstadoBombero.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // Fetch historial de estados
+      .addCase(fetchHistorialEstados.pending, (state) => {
+        state.historialLoading = true
+      })
+      .addCase(fetchHistorialEstados.fulfilled, (state, action) => {
+        state.historialLoading = false
+        state.historialEstados = action.payload.data
+      })
+      .addCase(fetchHistorialEstados.rejected, (state, action) => {
+        state.historialLoading = false
         state.error = action.payload
       })
   }
