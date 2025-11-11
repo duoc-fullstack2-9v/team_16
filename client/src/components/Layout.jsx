@@ -32,6 +32,7 @@ import {
   Inventory2 as Inventory2Icon,
   LocalShipping as LocalShippingIcon,
   NightsStay as NightsStayIcon,
+  WorkHistory as WorkHistoryIcon,
 } from '@mui/icons-material'
 
 import { logoutUser } from '../store/slices/authSlice'
@@ -79,6 +80,18 @@ const navigationItems = [
     text: 'Guardia Nocturna',
     icon: <NightsStayIcon />,
     path: '/guardias',
+    roles: ['admin'],
+  },
+  {
+    text: 'Licencias',
+    icon: <WorkHistoryIcon />,
+    path: '/licencias',
+    roles: ['admin', 'usuario'],
+  },
+  {
+    text: 'Admin Licencias',
+    icon: <AdminIcon />,
+    path: '/admin/licencias',
     roles: ['admin'],
   },
   {

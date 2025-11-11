@@ -15,6 +15,8 @@ import AdminPage from './pages/AdminPage'
 import MaterialMenorPage from './pages/MaterialMenorPage'
 import MaterialMayorPage from './pages/MaterialMayorPage'
 import GuardiasPage from './pages/GuardiasPage'
+import LicenciasPage from './pages/LicenciasPage'
+import AdminLicenciasPage from './pages/AdminLicenciasPage'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
@@ -51,9 +53,11 @@ function App() {
           <Route path="material" element={<MaterialMenorPage />} />
           <Route path="material-mayor" element={<MaterialMayorPage />} />
           <Route path="guardias" element={<GuardiasPage />} />
+          <Route path="licencias" element={<LicenciasPage />} />
           
           {/* Panel administrativo */}
           <Route path="admin" element={<AdminPage />} />
+          <Route path="admin/licencias" element={<AdminLicenciasPage />} />
         </Route>
         
         {/* Ruta por defecto */}

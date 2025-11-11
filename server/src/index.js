@@ -17,6 +17,7 @@ import categoriasRoutes from './routes/categorias.js'
 import materialRoutes from './routes/material.js'
 import carrosRoutes from './routes/carros.js'
 import guardiasRoutes from './routes/guardias.js'
+import licenciasRoutes from './routes/licencias.js'
 
 // Configurar variables de entorno
 dotenv.config()
@@ -105,6 +106,7 @@ app.use('/api/categorias', categoriasRoutes)
 app.use('/api/material', materialRoutes)
 app.use('/api/carros', carrosRoutes)
 app.use('/api/guardias', guardiasRoutes)
+app.use('/api/licencias', licenciasRoutes)
 
 // Ruta 404
 app.use('*', (req, res) => {

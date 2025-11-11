@@ -33,6 +33,8 @@ model User {
   guardiasMensualesCreadas   GuardiaMensual[]       @relation("GuardiaMensualCreatedBy")
   guardiasNocturnasAsignadas GuardiaDiaBombero[]
   plantillasCreadas          PlantillaGuardia[]     @relation("PlantillaGuardiaCreatedBy")
+  licenciasRevisadas         Licencia[]             @relation("LicenciaRevisadaPor")
+  licenciasCreadas           Licencia[]             @relation("LicenciaCreadaPor")
 
   @@map("users")
 }
@@ -61,6 +63,7 @@ model Bombero {
   conductorHabilitado    ConductorHabilitado[]
   guardiasNocturnas      GuardiaDiaBombero[]
   plantillasGuardias     PlantillaDiaBombero[]
+  licencias              Licencia[]
 
   @@map("bomberos")
 }
@@ -448,4 +451,64 @@ model PlantillaDiaBombero {
 
   @@unique([plantillaDiaId, bomberoId])
   @@map("plantillas_dias_bomberos")
+}
+
+// ==================== SISTEMA DE LICENCIAS ====================
+
+model TipoLicencia {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  nombre      String     @unique // "Médica", "Vacaciones", "Personal", "Estudios", "Laboral", "Otro"
+  descripcion String?
+  requiereDocumento Boolean @default(false) // Si requiere documento adjunto obligatorio
+  activo      Boolean    @default(true)
+  esPersonalizado Boolean @default(false) // true si fue creado por admin, false si es del sistema
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  licencias   Licencia[]
+
+  @@map("tipos_licencia")
+}
+
+model Licencia {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  bomberoId         String    @db.ObjectId
+  tipoLicenciaId    String    @db.ObjectId
+  otroMotivo        String?   // Si el tipo es "Otro", aquí se especifica
+  
+  // Fechas y duración
+  fechaInicio       DateTime
+  fechaFin          DateTime
+  esPorHoras        Boolean   @default(false) // false = días completos, true = por horas
+  horaInicio        String?   // "08:00" formato HH:mm (solo si esPorHoras = true)
+  horaFin           String?   // "17:00" formato HH:mm (solo si esPorHoras = true)
+  diasSolicitados   Float     // Calculado: días totales (puede ser decimal si es por horas)
+  
+  // Justificación y documentos
+  motivo            String?   // Justificación del bombero (max 500 caracteres)
+  documentosUrls    String[]  @default([]) // Array de URLs de documentos adjuntos (imágenes, PDFs)
+  
+  // Estado y flujo de aprobación
+  estado            String    @default("Pendiente") // Pendiente, Aprobada, Rechazada, Cancelada, Activa, Finalizada
+  
+  // Revisión por admin
+  revisadoPorId     String?   @db.ObjectId
+  fechaRevision     DateTime?
+  observacionesAdmin String?  // Comentarios del admin al revisar
+  
+  // Alertas y conflictos
+  tieneConflictoGuardia Boolean @default(false) // true si tiene guardia asignada en las fechas
+  
+  // Creación
+  creadoPorId       String?   @db.ObjectId // Puede ser el bombero mismo o un admin
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones
+  bombero           Bombero        @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  tipoLicencia      TipoLicencia   @relation(fields: [tipoLicenciaId], references: [id])
+  revisadoPor       User?          @relation("LicenciaRevisadaPor", fields: [revisadoPorId], references: [id])
+  creadoPor         User?          @relation("LicenciaCreadaPor", fields: [creadoPorId], references: [id])
+  
+  @@map("licencias")
 }

@@ -41,9 +41,10 @@ const cargoSchema = Joi.object({
 
 // Schema para asignar bombero a cargo
 const asignacionSchema = Joi.object({
-  bomberoId: Joi.number().integer().positive().required().messages({
-    'number.base': 'El ID del bombero debe ser un número',
-    'number.positive': 'El ID debe ser positivo',
+  bomberoId: Joi.string().length(24).hex().required().messages({
+    'string.base': 'El ID del bombero debe ser un texto',
+    'string.length': 'El ID del bombero debe tener 24 caracteres',
+    'string.hex': 'El ID del bombero debe ser hexadecimal válido',
     'any.required': 'El ID del bombero es requerido'
   }),
   fechaInicio: Joi.date().iso().default(() => new Date()).messages({
@@ -196,9 +197,9 @@ router.get('/estadisticas', authenticateToken, async (req, res) => {
 // GET /api/cargos/:id - Obtener cargo específico
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'
@@ -294,9 +295,9 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/cargos/:id - Actualizar cargo
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'
@@ -344,9 +345,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE /api/cargos/:id - Eliminar cargo
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'
@@ -401,9 +402,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 // POST /api/cargos/:id/asignar - Asignar bombero a cargo
 router.post('/:id/asignar', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'
@@ -517,9 +518,9 @@ router.post('/:id/asignar', authenticateToken, async (req, res) => {
 // PUT /api/cargos/:id/liberar - Liberar cargo (finalizar asignación actual)
 router.put('/:id/liberar', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'
@@ -599,9 +600,9 @@ router.put('/:id/liberar', authenticateToken, async (req, res) => {
 // GET /api/cargos/:id/historial - Obtener historial de asignaciones del cargo
 router.get('/:id/historial', authenticateToken, async (req, res) => {
   try {
-    const cargoId = parseInt(req.params.id)
+    const cargoId = req.params.id
 
-    if (isNaN(cargoId)) {
+    if (!cargoId || cargoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de cargo inválido'

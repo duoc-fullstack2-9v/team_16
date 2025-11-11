@@ -48,7 +48,7 @@ const AsignarCargoDialog = ({ open, onClose, cargo }) => {
 
     const result = await dispatch(asignarBombero({
       cargoId: cargo.id,
-      bomberoId: parseInt(bomberoId),
+      bomberoId: bomberoId,
       fechaInicio,
       periodoAnio,
       observaciones
@@ -59,7 +59,7 @@ const AsignarCargoDialog = ({ open, onClose, cargo }) => {
     }
   }
 
-  const bomberoSeleccionado = bomberos?.find(b => b.id === parseInt(bomberoId))
+  const bomberoSeleccionado = bomberos?.find(b => b.id === bomberoId)
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

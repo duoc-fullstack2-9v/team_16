@@ -7,6 +7,7 @@ import categoriasSlice from './slices/categoriasSlice.js'
 import materialSlice from './slices/materialSlice.js'
 import carrosSlice from './slices/carrosSlice.js'
 import guardiasSlice from './slices/guardiasSlice.js'
+import licenciasSlice from './slices/licenciasSlice.js'
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     material: materialSlice,
     carros: carrosSlice,
     guardias: guardiasSlice,
+    licencias: licenciasSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
