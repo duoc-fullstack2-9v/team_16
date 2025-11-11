@@ -27,8 +27,11 @@ const bomberoSchema = Joi.object({
   especialidad: Joi.string().max(200).optional().allow('').messages({
     'string.max': 'La especialidad no puede exceder 200 caracteres'
   }),
-  estado: Joi.string().valid('Activo', 'Licencia', 'Inactivo').default('Activo').messages({
-    'any.only': 'El estado debe ser: Activo, Licencia o Inactivo'
+  estado: Joi.string().valid('Activo', 'Suspendido', 'Dado de Baja', 'Renuncia').default('Activo').messages({
+    'any.only': 'El estado debe ser: Activo, Suspendido, Dado de Baja o Renuncia'
+  }),
+  motivoEstado: Joi.string().max(500).optional().allow('', null).messages({
+    'string.max': 'El motivo del estado no puede exceder 500 caracteres'
   }),
   telefono: Joi.string().min(8).max(25).pattern(/^[\+\d\s\-\(\)]+$/).optional().allow('').messages({
     'string.pattern.base': 'El teléfono debe contener solo números, espacios, guiones, paréntesis o signo +',
@@ -341,12 +344,16 @@ router.get('/stats/general', authenticateToken, async (req, res) => {
   try {
     const [
       totalActivos,
-      totalInactivos,
+      totalSuspendidos,
+      totalBajas,
+      totalRenuncias,
       porRango,
       nuevosUltimoMes
     ] = await Promise.all([
       prisma.bombero.count({ where: { estado: 'Activo' } }),
-      prisma.bombero.count({ where: { estado: { in: ['Inactivo', 'Licencia'] } } }),
+      prisma.bombero.count({ where: { estado: 'Suspendido' } }),
+      prisma.bombero.count({ where: { estado: 'Dado de Baja' } }),
+      prisma.bombero.count({ where: { estado: 'Renuncia' } }),
       prisma.bombero.groupBy({
         by: ['rango'],
         _count: { rango: true },
@@ -361,12 +368,18 @@ router.get('/stats/general', authenticateToken, async (req, res) => {
       })
     ])
 
+    const totalNoActivos = totalSuspendidos + totalBajas + totalRenuncias;
+    const total = totalActivos + totalNoActivos;
+
     res.json({
       success: true,
       data: {
         totalActivos,
-        totalInactivos,
-        total: totalActivos + totalInactivos,
+        totalSuspendidos,
+        totalBajas,
+        totalRenuncias,
+        totalNoActivos,
+        total,
         porRango: porRango.map(r => ({
           rango: r.rango,
           cantidad: r._count.rango
@@ -383,5 +396,156 @@ router.get('/stats/general', authenticateToken, async (req, res) => {
     })
   }
 })
+
+// POST /api/bomberos/:id/cambiar-estado - Cambiar estado de un bombero (Solo admin)
+router.post('/:id/cambiar-estado', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nuevoEstado, motivo, observaciones } = req.body;
+
+    // Verificar que el usuario sea admin
+    if (req.user.tipo !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para cambiar el estado de bomberos'
+      });
+    }
+
+    // Validar ObjectId
+    if (!id || id.length !== 24) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de bombero inválido'
+      });
+    }
+
+    // Validar estado
+    const estadosValidos = ['Activo', 'Suspendido', 'Dado de Baja', 'Renuncia'];
+    if (!estadosValidos.includes(nuevoEstado)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Estado inválido. Debe ser: Activo, Suspendido, Dado de Baja o Renuncia'
+      });
+    }
+
+    // Obtener bombero actual
+    const bombero = await prisma.bombero.findUnique({
+      where: { id }
+    });
+
+    if (!bombero) {
+      return res.status(404).json({
+        success: false,
+        message: 'Bombero no encontrado'
+      });
+    }
+
+    // Verificar si el estado ya es el mismo
+    if (bombero.estado === nuevoEstado) {
+      return res.status(400).json({
+        success: false,
+        message: `El bombero ya tiene el estado: ${nuevoEstado}`
+      });
+    }
+
+    const estadoAnterior = bombero.estado;
+
+    // Actualizar estado del bombero
+    const bomberoActualizado = await prisma.bombero.update({
+      where: { id },
+      data: {
+        estado: nuevoEstado,
+        motivoEstado: motivo || `Cambio de estado a ${nuevoEstado}`,
+        fechaCambioEstado: new Date()
+      }
+    });
+
+    // Crear registro en historial
+    await prisma.historialEstadoBombero.create({
+      data: {
+        bomberoId: id,
+        estadoAnterior,
+        estadoNuevo: nuevoEstado,
+        motivo: motivo || `Cambio de estado a ${nuevoEstado}`,
+        observaciones: observaciones || null,
+        cambiadoPorId: req.user.id,
+        fechaCambio: new Date()
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Estado del bombero cambiado exitosamente de ${estadoAnterior} a ${nuevoEstado}`,
+      data: bomberoActualizado
+    });
+
+  } catch (error) {
+    console.error('Error al cambiar estado del bombero:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/bomberos/:id/historial-estados - Obtener historial de cambios de estado
+router.get('/:id/historial-estados', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validar ObjectId
+    if (!id || id.length !== 24) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de bombero inválido'
+      });
+    }
+
+    // Verificar que el bombero existe
+    const bombero = await prisma.bombero.findUnique({
+      where: { id }
+    });
+
+    if (!bombero) {
+      return res.status(404).json({
+        success: false,
+        message: 'Bombero no encontrado'
+      });
+    }
+
+    // Obtener historial de estados
+    const historial = await prisma.historialEstadoBombero.findMany({
+      where: { bomberoId: id },
+      include: {
+        cambiadoPor: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true,
+            rol: true
+          }
+        }
+      },
+      orderBy: {
+        fechaCambio: 'desc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: historial
+    });
+
+  } catch (error) {
+    console.error('Error al obtener historial de estados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 
 export default router

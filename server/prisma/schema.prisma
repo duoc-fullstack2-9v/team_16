@@ -24,36 +24,39 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relaciones con ObjectId
-  bomberosCreados            Bombero[]              @relation("BomberoCreatedBy")
-  citacionesCreadas          Citacion[]             @relation("CitacionCreatedBy")
+  bomberosCreados            Bombero[]                   @relation("BomberoCreatedBy")
+  citacionesCreadas          Citacion[]                  @relation("CitacionCreatedBy")
   citacionesBombero          BomberoCitacion[]
   carrosCreados              Carro[]
   historialCarros            HistorialCarro[]
   historialCajoneras         HistorialCajonera[]
-  guardiasMensualesCreadas   GuardiaMensual[]       @relation("GuardiaMensualCreatedBy")
+  guardiasMensualesCreadas   GuardiaMensual[]            @relation("GuardiaMensualCreatedBy")
   guardiasNocturnasAsignadas GuardiaDiaBombero[]
-  plantillasCreadas          PlantillaGuardia[]     @relation("PlantillaGuardiaCreatedBy")
-  licenciasRevisadas         Licencia[]             @relation("LicenciaRevisadaPor")
-  licenciasCreadas           Licencia[]             @relation("LicenciaCreadaPor")
+  plantillasCreadas          PlantillaGuardia[]          @relation("PlantillaGuardiaCreatedBy")
+  licenciasRevisadas         Licencia[]                  @relation("LicenciaRevisadaPor")
+  licenciasCreadas           Licencia[]                  @relation("LicenciaCreadaPor")
+  historialEstadosCambiados  HistorialEstadoBombero[]    @relation("HistorialEstadoCambiadoPor")
 
   @@map("users")
 }
 
 model Bombero {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  nombres      String
-  apellidos    String
-  rango        String    // Bombero, Cabo, Sargento, etc.
-  especialidad String?
-  estado       String    @default("Activo") // Activo, Licencia, Inactivo
-  telefono     String?
-  email        String?
-  direccion    String?
-  fechaIngreso DateTime?
-  fotoUrl      String?   // URL de la foto del bombero
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  createdById  String?   @db.ObjectId
+  id                      String    @id @default(auto()) @map("_id") @db.ObjectId
+  nombres                 String
+  apellidos               String
+  rango                   String    // Bombero, Cabo, Sargento, etc.
+  especialidad            String?
+  estado                  String    @default("Activo") // Activo, Suspendido, Dado de Baja, Renuncia
+  motivoEstado            String?   // Motivo del último cambio de estado
+  fechaCambioEstado       DateTime? // Fecha del último cambio de estado
+  telefono                String?
+  email                   String?
+  direccion               String?
+  fechaIngreso            DateTime?
+  fotoUrl                 String?   // URL de la foto del bombero
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  createdById             String?   @db.ObjectId
 
   // Relaciones
   createdBy              User?                    @relation("BomberoCreatedBy", fields: [createdById], references: [id])
@@ -64,6 +67,7 @@ model Bombero {
   guardiasNocturnas      GuardiaDiaBombero[]
   plantillasGuardias     PlantillaDiaBombero[]
   licencias              Licencia[]
+  historialEstados       HistorialEstadoBombero[] // Historial de cambios de estado
 
   @@map("bomberos")
 }
@@ -511,4 +515,23 @@ model Licencia {
   creadoPor         User?          @relation("LicenciaCreadaPor", fields: [creadoPorId], references: [id])
   
   @@map("licencias")
+}
+
+// Modelo para historial de cambios de estado de bomberos
+model HistorialEstadoBombero {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  bomberoId       String   @db.ObjectId
+  estadoAnterior  String   // Estado antes del cambio
+  estadoNuevo     String   // Estado después del cambio
+  motivo          String?  // Motivo del cambio de estado
+  observaciones   String?  // Observaciones adicionales
+  cambiadoPorId   String   @db.ObjectId
+  fechaCambio     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  
+  // Relaciones
+  bombero         Bombero  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  cambiadoPor     User     @relation("HistorialEstadoCambiadoPor", fields: [cambiadoPorId], references: [id])
+  
+  @@map("historial_estados_bomberos")
 }

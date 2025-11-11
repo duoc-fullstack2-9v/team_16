@@ -172,7 +172,7 @@ router.get('/tipos-licencia', authenticateToken, async (req, res) => {
 router.post('/tipos-licencia', authenticateToken, async (req, res) => {
   try {
     // Verificar que el usuario sea admin
-    if (req.usuario.rol !== 'Administrador') {
+    if (req.user.rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'No tienes permiso para crear tipos de licencia' });
     }
     
@@ -230,10 +230,10 @@ router.get('/', authenticateToken, async (req, res) => {
     const where = {};
     
     // Si es bombero, solo ver sus propias licencias
-    if (req.usuario.rol === 'Bombero') {
+    if (req.user.rol === 'Bombero') {
       // Obtener el bombero asociado al usuario
       const bombero = await prisma.bombero.findFirst({
-        where: { usuarioId: req.usuario.id },
+        where: { usuarioId: req.user.id },
       });
       
       if (bombero) {
@@ -273,10 +273,10 @@ router.get('/', authenticateToken, async (req, res) => {
           bombero: {
             select: {
               id: true,
-              nombre: true,
+              nombres: true,
               apellidos: true,
-              rut: true,
-              fotoPerfil: true,
+              
+              fotoUrl: true,
             },
           },
           tipoLicencia: {
@@ -290,14 +290,14 @@ router.get('/', authenticateToken, async (req, res) => {
             select: {
               id: true,
               nombre: true,
-              apellido: true,
+              
             },
           },
           creadoPor: {
             select: {
               id: true,
               nombre: true,
-              apellido: true,
+              
             },
           },
         },
@@ -324,7 +324,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/estadisticas', authenticateToken, async (req, res) => {
   try {
     // Verificar que el usuario sea admin
-    if (req.usuario.rol !== 'Administrador') {
+    if (req.user.rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'No tienes permiso para ver estadísticas' });
     }
     
@@ -420,10 +420,10 @@ router.get('/:id', authenticateToken, async (req, res) => {
         bombero: {
           select: {
             id: true,
-            nombre: true,
+            nombres: true,
             apellidos: true,
-            rut: true,
-            fotoPerfil: true,
+            
+            fotoUrl: true,
             rango: true,
           },
         },
@@ -439,14 +439,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+            
           },
         },
         creadoPor: {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+            
           },
         },
       },
@@ -457,9 +457,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
     
     // Verificar permisos: admin o el bombero dueño de la licencia
-    if (req.usuario.rol === 'Bombero') {
+    if (req.user.rol === 'Bombero') {
       const bombero = await prisma.bombero.findFirst({
-        where: { usuarioId: req.usuario.id },
+        where: { usuarioId: req.user.id },
       });
       
       if (!bombero || bombero.id !== licencia.bomberoId) {
@@ -514,6 +514,13 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(404).json({ mensaje: 'Bombero no encontrado' });
     }
     
+    // Validar que el bombero esté en estado "Activo"
+    if (bombero.estado !== 'Activo') {
+      return res.status(400).json({ 
+        mensaje: `No se pueden crear licencias para bomberos con estado "${bombero.estado}". Solo bomberos activos pueden solicitar licencias.`
+      });
+    }
+    
     // Verificar que el tipo de licencia existe
     const tipoLicencia = await prisma.tipoLicencia.findUnique({
       where: { id: tipoLicenciaId },
@@ -554,15 +561,15 @@ router.post('/', authenticateToken, async (req, res) => {
         motivo: motivo || null,
         documentosUrls: documentosUrls || [],
         tieneConflictoGuardia,
-        creadoPorId: req.usuario.id,
+        creadoPorId: req.user.id,
       },
       include: {
         bombero: {
           select: {
             id: true,
-            nombre: true,
+            nombres: true,
             apellidos: true,
-            rut: true,
+            
           },
         },
         tipoLicencia: {
@@ -614,9 +621,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
     
     // Verificar permisos
-    if (req.usuario.rol === 'Bombero') {
+    if (req.user.rol === 'Bombero') {
       const bombero = await prisma.bombero.findFirst({
-        where: { usuarioId: req.usuario.id },
+        where: { usuarioId: req.user.id },
       });
       
       if (!bombero || bombero.id !== licencia.bomberoId) {
@@ -665,9 +672,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
         bombero: {
           select: {
             id: true,
-            nombre: true,
+            nombres: true,
             apellidos: true,
-            rut: true,
+            
           },
         },
         tipoLicencia: {
@@ -714,9 +721,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
     
     // Verificar permisos
-    if (req.usuario.rol === 'Bombero') {
+    if (req.user.rol === 'Bombero') {
       const bombero = await prisma.bombero.findFirst({
-        where: { usuarioId: req.usuario.id },
+        where: { usuarioId: req.user.id },
       });
       
       if (!bombero || bombero.id !== licencia.bomberoId) {
@@ -744,7 +751,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.post('/:id/aprobar', authenticateToken, async (req, res) => {
   try {
     // Verificar que el usuario sea admin
-    if (req.usuario.rol !== 'Administrador') {
+    if (req.user.rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'No tienes permiso para aprobar licencias' });
     }
     
@@ -777,7 +784,7 @@ router.post('/:id/aprobar', authenticateToken, async (req, res) => {
       where: { id },
       data: {
         estado: 'Aprobada',
-        revisadoPorId: req.usuario.id,
+        revisadoPorId: req.user.id,
         fechaRevision: new Date(),
         observacionesAdmin: value.observacionesAdmin || null,
       },
@@ -785,9 +792,9 @@ router.post('/:id/aprobar', authenticateToken, async (req, res) => {
         bombero: {
           select: {
             id: true,
-            nombre: true,
+            nombres: true,
             apellidos: true,
-            rut: true,
+            
           },
         },
         tipoLicencia: {
@@ -800,7 +807,7 @@ router.post('/:id/aprobar', authenticateToken, async (req, res) => {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+            
           },
         },
       },
@@ -823,7 +830,7 @@ router.post('/:id/aprobar', authenticateToken, async (req, res) => {
 router.post('/:id/rechazar', authenticateToken, async (req, res) => {
   try {
     // Verificar que el usuario sea admin
-    if (req.usuario.rol !== 'Administrador') {
+    if (req.user.rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'No tienes permiso para rechazar licencias' });
     }
     
@@ -856,7 +863,7 @@ router.post('/:id/rechazar', authenticateToken, async (req, res) => {
       where: { id },
       data: {
         estado: 'Rechazada',
-        revisadoPorId: req.usuario.id,
+        revisadoPorId: req.user.id,
         fechaRevision: new Date(),
         observacionesAdmin: value.observacionesAdmin || null,
       },
@@ -864,9 +871,9 @@ router.post('/:id/rechazar', authenticateToken, async (req, res) => {
         bombero: {
           select: {
             id: true,
-            nombre: true,
+            nombres: true,
             apellidos: true,
-            rut: true,
+            
           },
         },
         tipoLicencia: {
@@ -879,7 +886,7 @@ router.post('/:id/rechazar', authenticateToken, async (req, res) => {
           select: {
             id: true,
             nombre: true,
-            apellido: true,
+            
           },
         },
       },
@@ -889,6 +896,64 @@ router.post('/:id/rechazar', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error al rechazar licencia:', error);
     res.status(500).json({ mensaje: 'Error al rechazar licencia' });
+  }
+});
+
+// POST /api/licencias/actualizar-estados - Actualizar estados de licencias automáticamente
+router.post('/actualizar-estados', authenticateToken, async (req, res) => {
+  try {
+    // Solo admin puede ejecutar este endpoint
+    if (req.user.tipo !== 'admin') {
+      return res.status(403).json({ 
+        mensaje: 'No tienes permisos para ejecutar esta acción' 
+      });
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let actualizadas = 0;
+
+    // 1. Licencias Aprobadas que ya comenzaron → Cambiar a "Activa"
+    const licenciasParaActivar = await prisma.licencia.updateMany({
+      where: {
+        estado: 'Aprobada',
+        fechaInicio: {
+          lte: hoy
+        }
+      },
+      data: {
+        estado: 'Activa'
+      }
+    });
+    actualizadas += licenciasParaActivar.count;
+
+    // 2. Licencias Activas que ya terminaron → Cambiar a "Finalizada"
+    const licenciasParaFinalizar = await prisma.licencia.updateMany({
+      where: {
+        estado: 'Activa',
+        fechaFin: {
+          lt: hoy
+        }
+      },
+      data: {
+        estado: 'Finalizada'
+      }
+    });
+    actualizadas += licenciasParaFinalizar.count;
+
+    res.json({
+      success: true,
+      mensaje: `Se actualizaron ${actualizadas} licencias`,
+      detalles: {
+        activadas: licenciasParaActivar.count,
+        finalizadas: licenciasParaFinalizar.count
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar estados de licencias:', error);
+    res.status(500).json({ mensaje: 'Error al actualizar estados de licencias' });
   }
 });
 
