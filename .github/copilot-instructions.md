@@ -143,5 +143,51 @@ The system should automatically update the state of licenses based on their star
 The `Bombero` model has been updated to include:
 
 *   Valid states: "Activo", "Suspendido", "Dado de Baja", "Renuncia"
-*   Fields for tracking state changes: `motivoCambioEstado` (String, optional), `fechaCambioEstado` (DateTime, optional)
+*   Fields for tracking state changes: `motivoEstado` (String, optional), `fechaCambioEstado` (DateTime, optional)
 *   Relation to a new model `HistorialEstadoBombero` to store state change history.
+
+## ESTADO MANAGEMENT IMPLEMENTATION
+
+The estado management system has been fully implemented with the following components:
+
+### Backend Endpoints
+*   **POST /api/bomberos/:id/cambiar-estado** - Change bombero estado (admin only)
+    - Requires: `nuevoEstado`, `motivo` (required), `observaciones` (optional)
+    - Creates automatic audit entry in `HistorialEstadoBombero`
+    - Updates `Bombero.estado`, `motivoEstado`, and `fechaCambioEstado`
+*   **GET /api/bomberos/:id/historial-estados** - Get estado change history
+    - Returns complete audit trail with admin information
+*   **POST /api/licencias/actualizar-estados** - Auto-update license states (admin only)
+    - Updates Aprobada → Activa (if fechaInicio <= today)
+    - Updates Activa → Finalizada (if fechaFin < today)
+
+### Frontend Components
+*   **CambiarEstadoDialog** - Dialog for changing bombero estado
+    - Located at: `client/src/components/bomberos/CambiarEstadoDialog.jsx`
+    - Fields: Estado dropdown, motivo (required, max 200 chars), observaciones (optional, max 500 chars)
+    - Validations: Prevents same estado, requires motivo
+    - Warnings for different estados
+*   **BomberosList** - Integrated estado management button
+    - Button with SwapHorizIcon (warning color)
+    - Handlers: handleOpenCambiarEstado, handleCloseCambiarEstado, handleConfirmCambioEstado
+    - Auto-refresh list after estado change
+
+### Redux State Management
+*   **bomberosSlice** - Estado management actions
+    - `cambiarEstadoBombero` thunk - Changes estado and updates state
+    - `fetchHistorialEstados` thunk - Fetches audit history
+    - State fields: `historialEstados`, `historialLoading`
+    - Stats updated: `totalSuspendidos`, `totalBajas`, `totalRenuncias`, `totalNoActivos`
+
+### UI Elements
+*   Estado chips with colors:
+    - Activo: success (green)
+    - Suspendido: warning (orange)
+    - Dado de Baja: error (red)
+    - Renuncia: default (gray)
+
+### Business Logic
+*   Only Activo bomberos can create licenses (validated in backend)
+*   Only administrators can change estados
+*   All estado changes are audited in HistorialEstadoBombero
+*   Estado and Licencias are independent systems
