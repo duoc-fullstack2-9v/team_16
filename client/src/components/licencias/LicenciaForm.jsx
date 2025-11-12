@@ -35,7 +35,7 @@ const LicenciaForm = ({
   bomberos = [],
   mostrarSelectorBombero = false, // true para admin
 }) => {
-  const { usuario } = useSelector(state => state.auth);
+  const { user } = useSelector(state => state.auth);
   
   const [formData, setFormData] = useState({
     bomberoId: '',
@@ -53,6 +53,31 @@ const LicenciaForm = ({
 
   const [errores, setErrores] = useState({});
   const [advertenciaConflicto, setAdvertenciaConflicto] = useState(false);
+
+  // Obtener bomberoId del usuario autenticado si no se muestra el selector
+  useEffect(() => {
+    if (!mostrarSelectorBombero && user) {
+      // Buscar el bombero asociado al usuario
+      const fetchBomberoId = async () => {
+        try {
+          const token = localStorage.getItem('bomberosToken');
+          const response = await fetch('http://localhost:3002/api/bomberos/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setFormData(prev => ({
+              ...prev,
+              bomberoId: data.id
+            }));
+          }
+        } catch (error) {
+          console.error('Error al obtener bomberoId:', error);
+        }
+      };
+      fetchBomberoId();
+    }
+  }, [mostrarSelectorBombero, user]);
 
   useEffect(() => {
     if (licencia) {

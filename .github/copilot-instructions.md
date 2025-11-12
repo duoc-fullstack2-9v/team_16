@@ -24,7 +24,7 @@ This file defines all project rules, coding standards, workflow guidelines, refe
 *   **General:** Follow established coding conventions for Javascript/Typescript, React, Node.js and MongoDB.
 *   **Prisma:** Use Prisma for database interactions. Ensure correct handling of MongoDB ObjectIds. When querying data from the `Bombero` model, use `nombres` instead of `nombre`. Ensure you are using `fotoUrl` instead of `fotoPerfil`. Ensure that the `User` model does not use the `apellido` field.
 *   **Frontend:** Use Redux for state management. Organize components by module. When working with IDs in the frontend, ensure that you are not using `parseInt()` on IDs obtained from MongoDB. When interacting with local storage, ensure the correct token name (`bomberosToken`) is used. When sending `bomberoId` from the frontend, ensure it is sent as a string, not an integer. The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
-*   **Backend:** Use Joi for input validation. Implement proper authentication and authorization. Access user data from `req.user`, not `req.usuario`.
+*   **Backend:** Use Joi for input validation. Implement proper authentication and authorization. Access user data from `req.user`, not `req.usuario`. When validating user roles, ensure the correct role name is being checked (e.g., `'Administrador'`).
 *   **IDs:** When working with MongoDB and Prisma, handle IDs as strings (ObjectIds), not integers. Avoid using `parseInt()` on IDs obtained from `req.params.id`. Validate ObjectIds using `!cargoId || cargoId.length !== 24` and `Joi.string().length(24).hex()`.
 *   **Authentication:** Ensure the correct token name (`bomberosToken`) is used when retrieving the token from local storage.
 *   **Backend Authentication:** Use `req.user` to access user data from the authentication middleware. When accessing user data in the backend, always use `req.user` and not `req.usuario`.
@@ -210,3 +210,30 @@ The estado management system has been fully implemented with the following compo
 *   All estado changes are audited in HistorialEstadoBombero
 *   Estado and Licencias are independent systems
 *   The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
+
+## LICENSING MODULE SPECIFIC RULES (UPDATED)
+
+1.  **License Types:** The system must support the following license types: Medical, Vacation, Personal Reasons, Studies, Labor, and Other (with a field for specifying the reason). Administrators should be able to add additional license types to the system.
+2.  **License Duration:** Licenses must have a start and end date. They can be for hours or full days. There is no limit to the number of days per license type.
+3.  **Supporting Documentation:** Users can attach supporting documentation (images and PDF documents) to their license requests, but this is not mandatory.
+4.  **License Statuses:** The license statuses are: Pending, Approved, Rejected, Cancelled, Active, and Finalized.
+5.  **Permissions:** Both administrators and firefighters can create license requests. Administrators can also create licenses for a firefighter. Future development will include roles that can approve licenses in addition to administrators.
+6.  **Notifications:** Firefighters should be notified when their license request is approved or rejected. The administrator in charge should also receive a notification when a new request is created.
+7.  **History and Statistics:** The system must maintain a history of licenses for each firefighter and provide statistics on license usage.
+8.  **Guard Conflicts:** The system must generate an alert if a firefighter requests a license for a date when they are scheduled for guard duty. This should not automatically reject the license request, but should alert both the firefighter and the administrator. Approving the license does not automatically remove the firefighter from guard duty.
+9.  **Justification:** Firefighters can justify their requests with a text box limited to 500 characters, but this is not mandatory. Administrators can add observations.
+10. **License Scheduling:** Licenses must allow the selection of specific days of the week via checkboxes (Monday-Sunday), with options for same hours across all days or custom hours per day.
+
+## LICENSING MODULE SPECIFIC BACKEND RULES
+
+When creating a license for a firefighter:
+
+1.  **Automatic `bomberoId` Handling:** If the `bomberoId` is not provided in the request (e.g., when a firefighter is creating a license for themselves), the backend must automatically determine the `bomberoId` of the logged-in user and use that.
+2.  **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
+
+## LICENSING MODULE SPECIFIC FRONTEND RULES
+
+When creating a license for a firefighter:
+
+1.  **Obtain `bomberoId`:** If `mostrarSelectorBombero` is false, the frontend must obtain the `bomberoId` from the authentication state.
+2.  **`LicenciaForm` Component:** The `LicenciaForm` should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).

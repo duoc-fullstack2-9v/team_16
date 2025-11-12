@@ -52,6 +52,36 @@ const bomberoSchema = Joi.object({
   })
 })
 
+// GET /api/bomberos/me - Obtener bombero del usuario autenticado
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔍 Buscando bombero para usuario:', req.user);
+    
+    // Buscar el bombero asociado al usuario autenticado
+    const bombero = await prisma.bombero.findFirst({
+      where: { 
+        OR: [
+          { email: req.user.email },
+          { createdById: req.user.id }
+        ]
+      },
+    });
+    
+    console.log('✅ Bombero encontrado:', bombero);
+    
+    if (!bombero) {
+      return res.status(404).json({ 
+        mensaje: 'No se encontró un bombero asociado a este usuario' 
+      });
+    }
+    
+    res.json(bombero);
+  } catch (error) {
+    console.error('❌ Error al obtener bombero del usuario:', error);
+    res.status(500).json({ mensaje: 'Error al obtener datos del bombero' });
+  }
+});
+
 // GET /api/bomberos - Listar bomberos con paginación y filtros
 router.get('/', authenticateToken, async (req, res) => {
   try {

@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 // ========================
 
 const crearLicenciaSchema = Joi.object({
-  bomberoId: Joi.string().length(24).hex().required(),
+  bomberoId: Joi.string().length(24).hex().allow('', null).optional(),
   tipoLicenciaId: Joi.string().length(24).hex().required(),
   otroMotivo: Joi.string().max(200).allow(null, ''),
   fechaInicio: Joi.date().iso().required(),
@@ -416,7 +416,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/estadisticas', authenticateToken, async (req, res) => {
   try {
     // Verificar que el usuario sea admin
-    if (req.user.rol !== 'Administrador') {
+    if (req.user.tipo !== 'admin') {
       return res.status(403).json({ mensaje: 'No tienes permiso para ver estadísticas' });
     }
     
@@ -577,7 +577,7 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ mensaje: error.details[0].message });
     }
     
-    const {
+    let {
       bomberoId,
       tipoLicenciaId,
       otroMotivo,
@@ -590,6 +590,27 @@ router.post('/', authenticateToken, async (req, res) => {
       motivo,
       documentosUrls,
     } = value;
+    
+    // Si no se proporciona bomberoId, obtenerlo del usuario autenticado
+    if (!bomberoId || bomberoId.trim() === '') {
+      // Buscar el bombero asociado al usuario autenticado
+      const bomberoUsuario = await prisma.bombero.findFirst({
+        where: { 
+          OR: [
+            { email: req.user.email },
+            { createdById: req.user.id }
+          ]
+        },
+      });
+      
+      if (!bomberoUsuario) {
+        return res.status(404).json({ 
+          mensaje: 'No se encontró un bombero asociado a este usuario. Contacte al administrador.' 
+        });
+      }
+      
+      bomberoId = bomberoUsuario.id;
+    }
     
     // Validar que al menos un día de la semana esté seleccionado
     const diasActivos = diasSemana.filter(d => d.activo);
