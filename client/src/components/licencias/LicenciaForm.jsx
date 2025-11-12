@@ -1,18 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   MenuItem,
   Grid,
-  FormControlLabel,
-  Switch,
   Typography,
   Box,
-  Chip,
   Alert,
   IconButton,
   List,
@@ -22,13 +15,23 @@ import {
 } from '@mui/material';
 import { Delete, Upload, Warning } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
+import DiasSemanaSelectoretector from './DiasSemanaSelectoretector';
+
+const diasSemanaDefault = [
+  { dia: 'lunes', numero: 1, label: 'Lunes', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'martes', numero: 2, label: 'Martes', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'miercoles', numero: 3, label: 'Miércoles', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'jueves', numero: 4, label: 'Jueves', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'viernes', numero: 5, label: 'Viernes', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'sabado', numero: 6, label: 'Sábado', activo: false, horaInicio: '', horaFin: '' },
+  { dia: 'domingo', numero: 7, label: 'Domingo', activo: false, horaInicio: '', horaFin: '' }
+];
 
 const LicenciaForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  licenciaEditar = null,
+  licencia,
   tiposLicencia = [],
+  onSubmit,
+  onCancel,
   bomberos = [],
   mostrarSelectorBombero = false, // true para admin
 }) => {
@@ -40,9 +43,10 @@ const LicenciaForm = ({
     otroMotivo: '',
     fechaInicio: '',
     fechaFin: '',
-    esPorHoras: false,
-    horaInicio: '',
-    horaFin: '',
+    diasSemana: diasSemanaDefault,
+    mismoHorarioTodos: true,
+    horaInicioGeneral: '08:00',
+    horaFinGeneral: '17:00',
     motivo: '',
     documentosUrls: [],
   });
@@ -51,20 +55,21 @@ const LicenciaForm = ({
   const [advertenciaConflicto, setAdvertenciaConflicto] = useState(false);
 
   useEffect(() => {
-    if (licenciaEditar) {
+    if (licencia) {
       setFormData({
-        bomberoId: licenciaEditar.bomberoId || '',
-        tipoLicenciaId: licenciaEditar.tipoLicenciaId || '',
-        otroMotivo: licenciaEditar.otroMotivo || '',
-        fechaInicio: licenciaEditar.fechaInicio ? licenciaEditar.fechaInicio.split('T')[0] : '',
-        fechaFin: licenciaEditar.fechaFin ? licenciaEditar.fechaFin.split('T')[0] : '',
-        esPorHoras: licenciaEditar.esPorHoras || false,
-        horaInicio: licenciaEditar.horaInicio || '',
-        horaFin: licenciaEditar.horaFin || '',
-        motivo: licenciaEditar.motivo || '',
-        documentosUrls: licenciaEditar.documentosUrls || [],
+        bomberoId: licencia.bomberoId || '',
+        tipoLicenciaId: licencia.tipoLicenciaId || '',
+        otroMotivo: licencia.otroMotivo || '',
+        fechaInicio: licencia.fechaInicio ? licencia.fechaInicio.split('T')[0] : '',
+        fechaFin: licencia.fechaFin ? licencia.fechaFin.split('T')[0] : '',
+        diasSemana: licencia.diasSemana || diasSemanaDefault,
+        mismoHorarioTodos: licencia.mismoHorarioTodos !== undefined ? licencia.mismoHorarioTodos : true,
+        horaInicioGeneral: licencia.horaInicioGeneral || '08:00',
+        horaFinGeneral: licencia.horaFinGeneral || '17:00',
+        motivo: licencia.motivo || '',
+        documentosUrls: licencia.documentosUrls || [],
       });
-      setAdvertenciaConflicto(licenciaEditar.tieneConflictoGuardia || false);
+      setAdvertenciaConflicto(licencia.tieneConflictoGuardia || false);
     } else {
       // Limpiar formulario
       setFormData({
@@ -73,16 +78,17 @@ const LicenciaForm = ({
         otroMotivo: '',
         fechaInicio: '',
         fechaFin: '',
-        esPorHoras: false,
-        horaInicio: '',
-        horaFin: '',
+        diasSemana: diasSemanaDefault,
+        mismoHorarioTodos: true,
+        horaInicioGeneral: '08:00',
+        horaFinGeneral: '17:00',
         motivo: '',
         documentosUrls: [],
       });
       setAdvertenciaConflicto(false);
     }
     setErrores({});
-  }, [licenciaEditar, open]);
+  }, [licencia]);
 
   const handleChange = (campo, valor) => {
     setFormData(prev => ({
@@ -130,12 +136,27 @@ const LicenciaForm = ({
       }
     }
 
-    if (formData.esPorHoras) {
-      if (!formData.horaInicio) {
-        nuevosErrores.horaInicio = 'Ingrese hora de inicio';
+    // Validar días de la semana
+    const diasActivos = formData.diasSemana.filter(d => d.activo);
+    if (diasActivos.length === 0) {
+      nuevosErrores.diasSemana = 'Debe seleccionar al menos un día de la semana';
+    }
+
+    // Validar horarios
+    if (formData.mismoHorarioTodos) {
+      if (!formData.horaInicioGeneral) {
+        nuevosErrores.horaInicioGeneral = 'Ingrese hora de inicio general';
       }
-      if (!formData.horaFin) {
-        nuevosErrores.horaFin = 'Ingrese hora de fin';
+      if (!formData.horaFinGeneral) {
+        nuevosErrores.horaFinGeneral = 'Ingrese hora de fin general';
+      }
+    } else {
+      // Validar que cada día activo tenga horario
+      for (const dia of diasActivos) {
+        if (!dia.horaInicio || !dia.horaFin) {
+          nuevosErrores.diasSemana = `El día ${dia.label || dia.dia} debe tener horario especificado`;
+          break;
+        }
       }
     }
 
@@ -172,27 +193,14 @@ const LicenciaForm = ({
   const tipoSeleccionado = tiposLicencia.find(t => t.id === formData.tipoLicenciaId);
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
-      fullWidth
-      PaperProps={{
-        sx: { minHeight: '70vh' }
-      }}
-    >
-      <DialogTitle>
-        {licenciaEditar ? 'Editar Licencia' : 'Solicitar Nueva Licencia'}
-      </DialogTitle>
+    <>
+      {advertenciaConflicto && (
+        <Alert severity="warning" icon={<Warning />} sx={{ mb: 2 }}>
+          Esta licencia tiene conflicto con guardias asignadas en estas fechas.
+        </Alert>
+      )}
 
-      <DialogContent>
-        {advertenciaConflicto && (
-          <Alert severity="warning" icon={<Warning />} sx={{ mb: 2 }}>
-            Esta licencia tiene conflicto con guardias asignadas en estas fechas.
-          </Alert>
-        )}
-
-        <Grid container spacing={2} sx={{ mt: 1 }}>
+      <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Selector de Bombero (solo para admin) */}
           {mostrarSelectorBombero && (
             <Grid item xs={12}>
@@ -249,19 +257,6 @@ const LicenciaForm = ({
             </Grid>
           )}
 
-          {/* Switch: Por horas o días completos */}
-          <Grid item xs={12}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.esPorHoras}
-                  onChange={(e) => handleChange('esPorHoras', e.target.checked)}
-                />
-              }
-              label="Licencia por horas (en lugar de días completos)"
-            />
-          </Grid>
-
           {/* Fecha Inicio */}
           <Grid item xs={12} sm={6}>
             <TextField
@@ -290,36 +285,25 @@ const LicenciaForm = ({
             />
           </Grid>
 
-          {/* Hora Inicio y Fin (si es por horas) */}
-          {formData.esPorHoras && (
-            <>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  type="time"
-                  fullWidth
-                  label="Hora de Inicio *"
-                  value={formData.horaInicio}
-                  onChange={(e) => handleChange('horaInicio', e.target.value)}
-                  error={!!errores.horaInicio}
-                  helperText={errores.horaInicio}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  type="time"
-                  fullWidth
-                  label="Hora de Fin *"
-                  value={formData.horaFin}
-                  onChange={(e) => handleChange('horaFin', e.target.value)}
-                  error={!!errores.horaFin}
-                  helperText={errores.horaFin}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </>
-          )}
+          {/* Selector de días de la semana con horarios */}
+          <Grid item xs={12}>
+            <DiasSemanaSelectoretector
+              value={formData.diasSemana}
+              onChange={(nuevoDias) => handleChange('diasSemana', nuevoDias)}
+              mismoHorarioTodos={formData.mismoHorarioTodos}
+              onMismoHorarioChange={(valor) => handleChange('mismoHorarioTodos', valor)}
+              horaInicioGeneral={formData.horaInicioGeneral}
+              horaFinGeneral={formData.horaFinGeneral}
+              onHorarioGeneralChange={(campo, valor) => {
+                handleChange(campo === 'inicio' ? 'horaInicioGeneral' : 'horaFinGeneral', valor);
+              }}
+            />
+            {errores.diasSemana && (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                {errores.diasSemana}
+              </Typography>
+            )}
+          </Grid>
 
           {/* Motivo/Justificación */}
           <Grid item xs={12}>
@@ -381,15 +365,14 @@ const LicenciaForm = ({
             </Box>
           </Grid>
         </Grid>
-      </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          {licenciaEditar ? 'Guardar Cambios' : 'Solicitar Licencia'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button onClick={onCancel}>Cancelar</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            {licencia ? 'Guardar Cambios' : 'Solicitar Licencia'}
+          </Button>
+        </Box>
+      </>
   );
 };
 

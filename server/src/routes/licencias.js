@@ -16,9 +16,19 @@ const crearLicenciaSchema = Joi.object({
   otroMotivo: Joi.string().max(200).allow(null, ''),
   fechaInicio: Joi.date().iso().required(),
   fechaFin: Joi.date().iso().min(Joi.ref('fechaInicio')).required(),
-  esPorHoras: Joi.boolean().default(false),
-  horaInicio: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
-  horaFin: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
+  diasSemana: Joi.array().items(
+    Joi.object({
+      dia: Joi.string().valid('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo').required(),
+      numero: Joi.number().integer().min(1).max(7).required(),
+      label: Joi.string().required(),
+      activo: Joi.boolean().required(),
+      horaInicio: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow('', null),
+      horaFin: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow('', null),
+    })
+  ).required(),
+  mismoHorarioTodos: Joi.boolean().default(true),
+  horaInicioGeneral: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
+  horaFinGeneral: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
   motivo: Joi.string().max(500).allow(null, ''),
   documentosUrls: Joi.array().items(Joi.string().uri()).default([]),
 });
@@ -28,9 +38,19 @@ const actualizarLicenciaSchema = Joi.object({
   otroMotivo: Joi.string().max(200).allow(null, ''),
   fechaInicio: Joi.date().iso(),
   fechaFin: Joi.date().iso(),
-  esPorHoras: Joi.boolean(),
-  horaInicio: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
-  horaFin: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
+  diasSemana: Joi.array().items(
+    Joi.object({
+      dia: Joi.string().valid('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo').required(),
+      numero: Joi.number().integer().min(1).max(7).required(),
+      label: Joi.string().required(),
+      activo: Joi.boolean().required(),
+      horaInicio: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow('', null),
+      horaFin: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow('', null),
+    })
+  ),
+  mismoHorarioTodos: Joi.boolean(),
+  horaInicioGeneral: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
+  horaFinGeneral: Joi.string().pattern(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).allow(null, ''),
   motivo: Joi.string().max(500).allow(null, ''),
   documentosUrls: Joi.array().items(Joi.string().uri()),
 });
@@ -51,7 +71,79 @@ const crearTipoLicenciaSchema = Joi.object({
 // ========================
 
 /**
- * Calcula los días solicitados entre dos fechas
+ * Calcula los días y horas totales de una licencia basándose en los días de la semana seleccionados
+ * @param {Date} fechaInicio - Fecha de inicio del período
+ * @param {Date} fechaFin - Fecha de fin del período
+ * @param {Array} diasSemana - Array de objetos con configuración de cada día
+ * @param {Boolean} mismoHorarioTodos - Si todos los días tienen el mismo horario
+ * @param {String} horaInicioGeneral - Hora de inicio general (si mismoHorarioTodos = true)
+ * @param {String} horaFinGeneral - Hora de fin general (si mismoHorarioTodos = true)
+ * @returns {Object} - { diasSolicitados, horasTotales }
+ */
+function calcularDiasYHoras(fechaInicio, fechaFin, diasSemana, mismoHorarioTodos, horaInicioGeneral, horaFinGeneral) {
+  const inicio = new Date(fechaInicio);
+  const fin = new Date(fechaFin);
+  
+  // Obtener qué días de la semana están activos
+  const diasActivos = diasSemana.filter(d => d.activo);
+  
+  if (diasActivos.length === 0) {
+    return { diasSolicitados: 0, horasTotales: 0 };
+  }
+  
+  // Crear un Set con los números de días activos (1=lunes, 7=domingo)
+  const numerosActivos = new Set(diasActivos.map(d => d.numero));
+  
+  let diasContados = 0;
+  let horasTotales = 0;
+  
+  // Iterar sobre cada día del período
+  const fechaActual = new Date(inicio);
+  while (fechaActual <= fin) {
+    // En JavaScript: 0=domingo, 1=lunes, ..., 6=sábado
+    // Necesitamos convertir a nuestro sistema: 1=lunes, ..., 7=domingo
+    const diaSemanaJS = fechaActual.getDay(); // 0-6
+    const numeroDia = diaSemanaJS === 0 ? 7 : diaSemanaJS; // Convertir domingo de 0 a 7
+    
+    // Si este día de la semana está activo, contarlo
+    if (numerosActivos.has(numeroDia)) {
+      diasContados++;
+      
+      // Calcular horas para este día
+      if (mismoHorarioTodos && horaInicioGeneral && horaFinGeneral) {
+        // Usar horario general
+        const [horaIni, minIni] = horaInicioGeneral.split(':').map(Number);
+        const [horaFin, minFin] = horaFinGeneral.split(':').map(Number);
+        const minutosInicio = horaIni * 60 + minIni;
+        const minutosFin = horaFin * 60 + minFin;
+        const minutosTotal = minutosFin - minutosInicio;
+        horasTotales += minutosTotal / 60;
+      } else {
+        // Usar horario personalizado de este día
+        const diaConfig = diasActivos.find(d => d.numero === numeroDia);
+        if (diaConfig && diaConfig.horaInicio && diaConfig.horaFin) {
+          const [horaIni, minIni] = diaConfig.horaInicio.split(':').map(Number);
+          const [horaFin, minFin] = diaConfig.horaFin.split(':').map(Number);
+          const minutosInicio = horaIni * 60 + minIni;
+          const minutosFin = horaFin * 60 + minFin;
+          const minutosTotal = minutosFin - minutosInicio;
+          horasTotales += minutosTotal / 60;
+        }
+      }
+    }
+    
+    // Avanzar al siguiente día
+    fechaActual.setDate(fechaActual.getDate() + 1);
+  }
+  
+  return {
+    diasSolicitados: diasContados,
+    horasTotales: Number(horasTotales.toFixed(2))
+  };
+}
+
+/**
+ * Calcula los días solicitados entre dos fechas (FUNCIÓN LEGACY - MANTENER PARA COMPATIBILIDAD)
  * Si es por horas, calcula la fracción de días
  */
 function calcularDiasSolicitados(fechaInicio, fechaFin, esPorHoras, horaInicio, horaFin) {
@@ -491,18 +583,37 @@ router.post('/', authenticateToken, async (req, res) => {
       otroMotivo,
       fechaInicio,
       fechaFin,
-      esPorHoras,
-      horaInicio,
-      horaFin,
+      diasSemana,
+      mismoHorarioTodos,
+      horaInicioGeneral,
+      horaFinGeneral,
       motivo,
       documentosUrls,
     } = value;
     
-    // Validaciones adicionales
-    if (esPorHoras && (!horaInicio || !horaFin)) {
+    // Validar que al menos un día de la semana esté seleccionado
+    const diasActivos = diasSemana.filter(d => d.activo);
+    if (diasActivos.length === 0) {
       return res.status(400).json({ 
-        mensaje: 'Si la licencia es por horas, debe especificar hora de inicio y fin' 
+        mensaje: 'Debe seleccionar al menos un día de la semana para la licencia' 
       });
+    }
+    
+    // Validar horarios
+    if (mismoHorarioTodos) {
+      if (!horaInicioGeneral || !horaFinGeneral) {
+        return res.status(400).json({ 
+          mensaje: 'Debe especificar hora de inicio y fin para todos los días' 
+        });
+      }
+    } else {
+      // Validar que cada día activo tenga horario
+      const diasSinHorario = diasActivos.filter(d => !d.horaInicio || !d.horaFin);
+      if (diasSinHorario.length > 0) {
+        return res.status(400).json({ 
+          mensaje: 'Todos los días seleccionados deben tener hora de inicio y fin' 
+        });
+      }
     }
     
     // Verificar que el bombero existe
@@ -530,13 +641,14 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(404).json({ mensaje: 'Tipo de licencia no encontrado' });
     }
     
-    // Calcular días solicitados
-    const diasSolicitados = calcularDiasSolicitados(
+    // Calcular días y horas totales usando la nueva función
+    const { diasSolicitados, horasTotales } = calcularDiasYHoras(
       fechaInicio,
       fechaFin,
-      esPorHoras,
-      horaInicio,
-      horaFin
+      diasSemana,
+      mismoHorarioTodos,
+      horaInicioGeneral,
+      horaFinGeneral
     );
     
     // Detectar conflictos con guardias
@@ -554,10 +666,12 @@ router.post('/', authenticateToken, async (req, res) => {
         otroMotivo: otroMotivo || null,
         fechaInicio: new Date(fechaInicio),
         fechaFin: new Date(fechaFin),
-        esPorHoras: esPorHoras || false,
-        horaInicio: horaInicio || null,
-        horaFin: horaFin || null,
+        diasSemana: diasSemana,
+        mismoHorarioTodos: mismoHorarioTodos,
+        horaInicioGeneral: horaInicioGeneral || null,
+        horaFinGeneral: horaFinGeneral || null,
         diasSolicitados,
+        horasTotales,
         motivo: motivo || null,
         documentosUrls: documentosUrls || [],
         tieneConflictoGuardia,
@@ -634,21 +748,50 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // Preparar datos de actualización
     const updateData = { ...value };
     
-    // Si se modifican las fechas, recalcular días y conflictos
-    if (value.fechaInicio || value.fechaFin) {
+    // Si se modifican las fechas o diasSemana, recalcular días, horas y conflictos
+    if (value.fechaInicio || value.fechaFin || value.diasSemana) {
       const fechaInicio = value.fechaInicio || licencia.fechaInicio;
       const fechaFin = value.fechaFin || licencia.fechaFin;
-      const esPorHoras = value.esPorHoras !== undefined ? value.esPorHoras : licencia.esPorHoras;
-      const horaInicio = value.horaInicio || licencia.horaInicio;
-      const horaFin = value.horaFin || licencia.horaFin;
+      const diasSemana = value.diasSemana || licencia.diasSemana;
+      const mismoHorarioTodos = value.mismoHorarioTodos !== undefined ? value.mismoHorarioTodos : licencia.mismoHorarioTodos;
+      const horaInicioGeneral = value.horaInicioGeneral || licencia.horaInicioGeneral;
+      const horaFinGeneral = value.horaFinGeneral || licencia.horaFinGeneral;
       
-      updateData.diasSolicitados = calcularDiasSolicitados(
+      // Validar que al menos un día esté seleccionado
+      const diasActivos = diasSemana.filter(d => d.activo);
+      if (diasActivos.length === 0) {
+        return res.status(400).json({ 
+          mensaje: 'Debe seleccionar al menos un día de la semana para la licencia' 
+        });
+      }
+      
+      // Validar horarios
+      if (mismoHorarioTodos) {
+        if (!horaInicioGeneral || !horaFinGeneral) {
+          return res.status(400).json({ 
+            mensaje: 'Debe especificar hora de inicio y fin para todos los días' 
+          });
+        }
+      } else {
+        const diasSinHorario = diasActivos.filter(d => !d.horaInicio || !d.horaFin);
+        if (diasSinHorario.length > 0) {
+          return res.status(400).json({ 
+            mensaje: 'Todos los días seleccionados deben tener hora de inicio y fin' 
+          });
+        }
+      }
+      
+      const { diasSolicitados, horasTotales } = calcularDiasYHoras(
         fechaInicio,
         fechaFin,
-        esPorHoras,
-        horaInicio,
-        horaFin
+        diasSemana,
+        mismoHorarioTodos,
+        horaInicioGeneral,
+        horaFinGeneral
       );
+      
+      updateData.diasSolicitados = diasSolicitados;
+      updateData.horasTotales = horasTotales;
       
       updateData.tieneConflictoGuardia = await detectarConflictoGuardia(
         licencia.bomberoId,

@@ -158,21 +158,50 @@ const LicenciaCard = ({ licencia, onEditar, onCancelar, onVerDetalle, esAdmin = 
             </Typography>
           </Box>
 
-          {/* Horario (si es por horas) */}
-          {licencia.esPorHoras && licencia.horaInicio && licencia.horaFin && (
+          {/* Días de la semana seleccionados */}
+          {licencia.diasSemana && Array.isArray(licencia.diasSemana) && (
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                Días seleccionados:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {licencia.diasSemana
+                  .filter(d => d.activo)
+                  .map((dia, idx) => (
+                    <Chip
+                      key={idx}
+                      label={dia.label}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem', height: 20 }}
+                    />
+                  ))}
+              </Box>
+            </Box>
+          )}
+
+          {/* Horario */}
+          {licencia.mismoHorarioTodos && licencia.horaInicioGeneral && licencia.horaFinGeneral ? (
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <AccessTime sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
-                {licencia.horaInicio} - {licencia.horaFin}
+                {licencia.horaInicioGeneral} - {licencia.horaFinGeneral} (todos los días)
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <AccessTime sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
+              <Typography variant="body2" color="text.secondary">
+                Horario personalizado por día
               </Typography>
             </Box>
           )}
 
-          {/* Días solicitados */}
+          {/* Días y horas totales */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             <CalendarToday sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
             <Typography variant="body2" fontWeight="medium">
-              {licencia.diasSolicitados} {licencia.esPorHoras ? 'días equivalentes' : 'días'}
+              {licencia.diasSolicitados} días • {licencia.horasTotales || 0} horas
             </Typography>
           </Box>
 

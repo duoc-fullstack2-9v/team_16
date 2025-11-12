@@ -480,13 +480,21 @@ model Licencia {
   tipoLicenciaId    String    @db.ObjectId
   otroMotivo        String?   // Si el tipo es "Otro", aquí se especifica
   
-  // Fechas y duración
+  // Fechas del periodo de licencia
   fechaInicio       DateTime
   fechaFin          DateTime
-  esPorHoras        Boolean   @default(false) // false = días completos, true = por horas
-  horaInicio        String?   // "08:00" formato HH:mm (solo si esPorHoras = true)
-  horaFin           String?   // "17:00" formato HH:mm (solo si esPorHoras = true)
-  diasSolicitados   Float     // Calculado: días totales (puede ser decimal si es por horas)
+  
+  // NUEVA LÓGICA: Configuración de días de la semana
+  diasSemana        Json      // Array con configuración de cada día: [{ dia, numero, activo, horaInicio, horaFin }]
+  mismoHorarioTodos Boolean   @default(true) // true = mismo horario para todos, false = horario personalizado
+  
+  // Horario general (si mismoHorarioTodos = true)
+  horaInicioGeneral String?   // "08:00" formato HH:mm
+  horaFinGeneral    String?   // "17:00" formato HH:mm
+  
+  // Cálculos automáticos
+  diasSolicitados   Float     // Total de días calculados
+  horasTotales      Float?    // Total de horas (opcional)
   
   // Justificación y documentos
   motivo            String?   // Justificación del bombero (max 500 caracteres)

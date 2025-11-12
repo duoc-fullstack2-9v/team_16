@@ -245,29 +245,81 @@ const LicenciasPage = () => {
                   </Typography>
                 </Grid>
 
-                {licenciaDetalle.esPorHoras && (
+                {/* Días de la semana seleccionados */}
+                {licenciaDetalle.diasSemana && Array.isArray(licenciaDetalle.diasSemana) && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      Días de la Semana Seleccionados
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {licenciaDetalle.diasSemana
+                        .filter(d => d.activo)
+                        .map((dia, idx) => (
+                          <Chip
+                            key={idx}
+                            label={dia.label}
+                            color="primary"
+                            variant="outlined"
+                            size="small"
+                          />
+                        ))}
+                    </Box>
+                  </Grid>
+                )}
+
+                {/* Horarios */}
+                {licenciaDetalle.mismoHorarioTodos && licenciaDetalle.horaInicioGeneral && licenciaDetalle.horaFinGeneral ? (
                   <>
                     <Grid item xs={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Hora Inicio
+                        Hora Inicio (todos los días)
                       </Typography>
-                      <Typography variant="body1">{licenciaDetalle.horaInicio}</Typography>
+                      <Typography variant="body1">{licenciaDetalle.horaInicioGeneral}</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Hora Fin
+                        Hora Fin (todos los días)
                       </Typography>
-                      <Typography variant="body1">{licenciaDetalle.horaFin}</Typography>
+                      <Typography variant="body1">{licenciaDetalle.horaFinGeneral}</Typography>
                     </Grid>
                   </>
-                )}
+                ) : licenciaDetalle.diasSemana && !licenciaDetalle.mismoHorarioTodos ? (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      Horarios Personalizados por Día
+                    </Typography>
+                    <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      {licenciaDetalle.diasSemana
+                        .filter(d => d.activo)
+                        .map((dia, idx) => (
+                          <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <Typography variant="body2" fontWeight="medium">
+                              {dia.label}:
+                            </Typography>
+                            <Typography variant="body2">
+                              {dia.horaInicio} - {dia.horaFin}
+                            </Typography>
+                          </Box>
+                        ))}
+                    </Paper>
+                  </Grid>
+                ) : null}
 
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Días Solicitados
                   </Typography>
-                  <Typography variant="body1">
+                  <Typography variant="body1" fontWeight="medium">
                     {licenciaDetalle.diasSolicitados} días
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Horas Totales
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {licenciaDetalle.horasTotales || 0} horas
                   </Typography>
                 </Grid>
 

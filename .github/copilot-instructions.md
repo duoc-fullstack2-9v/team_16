@@ -23,7 +23,7 @@ This file defines all project rules, coding standards, workflow guidelines, refe
 
 *   **General:** Follow established coding conventions for Javascript/Typescript, React, Node.js and MongoDB.
 *   **Prisma:** Use Prisma for database interactions. Ensure correct handling of MongoDB ObjectIds. When querying data from the `Bombero` model, use `nombres` instead of `nombre`. Ensure you are using `fotoUrl` instead of `fotoPerfil`. Ensure that the `User` model does not use the `apellido` field.
-*   **Frontend:** Use Redux for state management. Organize components by module. When working with IDs in the frontend, ensure that you are not using `parseInt()` on IDs obtained from MongoDB. When interacting with local storage, ensure the correct token name (`bomberosToken`) is used. When sending `bomberoId` from the frontend, ensure it is sent as a string, not an integer.
+*   **Frontend:** Use Redux for state management. Organize components by module. When working with IDs in the frontend, ensure that you are not using `parseInt()` on IDs obtained from MongoDB. When interacting with local storage, ensure the correct token name (`bomberosToken`) is used. When sending `bomberoId` from the frontend, ensure it is sent as a string, not an integer. The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
 *   **Backend:** Use Joi for input validation. Implement proper authentication and authorization. Access user data from `req.user`, not `req.usuario`.
 *   **IDs:** When working with MongoDB and Prisma, handle IDs as strings (ObjectIds), not integers. Avoid using `parseInt()` on IDs obtained from `req.params.id`. Validate ObjectIds using `!cargoId || cargoId.length !== 24` and `Joi.string().length(24).hex()`.
 *   **Authentication:** Ensure the correct token name (`bomberosToken`) is used when retrieving the token from local storage.
@@ -45,6 +45,7 @@ This file defines all project rules, coding standards, workflow guidelines, refe
 *   When debugging Prisma issues with MongoDB, check if IDs are being handled as strings (ObjectIds) instead of integers.
 *   When encountering "403 Forbidden" errors, especially after implementing new modules, immediately verify the authentication middleware and ensure the correct tokens are being used and validated. Verify the correct token name is being used (`bomberosToken`). Also, ensure that `req.user` is being used in the backend to access user data from the authentication middleware.
 *   When encountering 500 Internal Server Errors related to database queries, verify the Prisma schema and ensure that the field names used in the queries match the field names defined in the schema. For example, ensure that you are using `nombres` instead of `nombre` when querying the `Bombero` model. Also, verify that the fields exist in the model, e.g. `fotoUrl` instead of `fotoPerfil` and that the data types match. Also, ensure the field `apellido` is not being used for `User` model as it does not exist.
+*   When debugging issues related to the `open` prop in Material UI Dialogs, ensure that the `open` and `onClose` props are correctly passed down from the parent component to the child component that contains the Dialog. Ensure that the `Dialog` component is only wrapped once and that there are no nested or conflicting `Dialog` wrappers.
 
 ## MODULE DEVELOPMENT GUIDELINES
 
@@ -84,6 +85,7 @@ When creating new modules, follow these steps:
 7.  **History and Statistics:** The system must maintain a history of licenses for each firefighter and provide statistics on license usage.
 8.  **Guard Conflicts:** The system must generate an alert if a firefighter requests a license for a date when they are scheduled for guard duty. This should not automatically reject the license request, but should alert both the firefighter and the administrator. Approving the license does not automatically remove the firefighter from guard duty.
 9.  **Justification:** Firefighters can justify their requests with a text box limited to 500 characters, but this is not mandatory. Administrators can add observations.
+10. **License Scheduling:** Licenses must allow the selection of specific days of the week via checkboxes (Monday-Sunday), with options for same hours across all days or custom hours per day.
 
 ## BOMBERO (FIREFIGHTER) STATES
 
@@ -146,6 +148,22 @@ The `Bombero` model has been updated to include:
 *   Fields for tracking state changes: `motivoEstado` (String, optional), `fechaCambioEstado` (DateTime, optional)
 *   Relation to a new model `HistorialEstadoBombero` to store state change history.
 
+The `User` model has been updated to include:
+
+*   Relation to `HistorialEstadoBombero` to track state changes.
+
+The `Licencia` model has been updated to include:
+
+*   `diasSemana` (JSON array with configuration of each day)
+*   `mismoHorarioTodos` (Boolean)
+*   `horaInicioGeneral`
+*   `horaFinGeneral`
+
+The following fields have been removed from the `Licencia` model:
+*   `esPorHoras`
+*   `horaInicio`
+*   `horaFin`
+
 ## ESTADO MANAGEMENT IMPLEMENTATION
 
 The estado management system has been fully implemented with the following components:
@@ -191,3 +209,4 @@ The estado management system has been fully implemented with the following compo
 *   Only administrators can change estados
 *   All estado changes are audited in HistorialEstadoBombero
 *   Estado and Licencias are independent systems
+*   The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
