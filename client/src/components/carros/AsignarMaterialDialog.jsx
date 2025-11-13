@@ -18,7 +18,7 @@ import {
 } from '@mui/material'
 import { Close as CloseIcon, Save as SaveIcon } from '@mui/icons-material'
 import { asignarMaterialCarro } from '../../store/slices/carrosSlice'
-import axios from 'axios'
+import api from '../../services/api'
 
 function AsignarMaterialDialog({ open, onClose, carroId, cajoneras, onSuccess }) {
   const dispatch = useDispatch()
@@ -47,9 +47,7 @@ function AsignarMaterialDialog({ open, onClose, carroId, cajoneras, onSuccess })
   const loadMaterialesDisponibles = async () => {
     setLoadingMateriales(true)
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:3001/api/material', {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await api.get('/material', {
         params: {
           limit: 100,
           estado: 'Disponible'

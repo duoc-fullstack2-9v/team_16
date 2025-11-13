@@ -31,7 +31,7 @@ This file defines all project rules, coding standards, workflow guidelines, refe
 
 ## WORKFLOW & RELEASE RULES
 
-*   **Git:** Use feature branches for all new development. When encountering issues checking out a branch due to untracked files, consider stashing changes (`git stash`), removing the conflicting directory, or cleaning the working directory.
+*   **Git:** Use feature branches for all new development. When encountering issues checking out a branch due to untracked files, consider stashing changes (`git stash`), removing the conflicting directory, or cleaning the working directory. The project's sole repository is `https://github.com/BenjaminHeresmann/SGIB-WEB.git` on the `main` branch.
 *   **Testing:** Thoroughly test all new code before committing.
 *   **Deployment:** Automated deployment pipeline to be defined.
 *   **Git Workflow:** When encountering issues checking out a branch due to untracked files, consider stashing changes (`git stash`), removing the conflicting directory, or cleaning the working directory.
@@ -76,7 +76,7 @@ When creating new modules, follow these steps:
 
 ## LICENSING MODULE SPECIFIC RULES
 
-1.  **License Types:** The system must support the following license types: Medical, Vacation, Personal Reasons, Studies, Labor, and Other (with a field for specifying the reason). Administrators should be able to add additional license types to the system. Administrators should be able to add additional license types to the system.
+1.  **License Types:** The system must support the following license types: Medical, Vacation, Personal Reasons, Studies, Labor, and Other (with a field for specifying the reason). Administrators should be able to add additional license types to the system.
 2.  **License Duration:** Licenses must have a start and end date. They can be for hours or full days. There is no limit to the number of days per license type.
 3.  **Supporting Documentation:** Users can attach supporting documentation (images and PDF documents) to their license requests, but this is not mandatory.
 4.  **License Statuses:** The license statuses are: Pending, Approved, Rejected, Cancelled, Active, and Finalized.
@@ -86,6 +86,42 @@ When creating new modules, follow these steps:
 8.  **Guard Conflicts:** The system must generate an alert if a firefighter requests a license for a date when they are scheduled for guard duty. This should not automatically reject the license request, but should alert both the firefighter and the administrator. Approving the license does not automatically remove the firefighter from guard duty.
 9.  **Justification:** Firefighters can justify their requests with a text box limited to 500 characters, but this is not mandatory. Administrators can add observations.
 10. **License Scheduling:** Licenses must allow the selection of specific days of the week via checkboxes (Monday-Sunday), with options for same hours across all days or custom hours per day.
+
+## LICENSING MODULE SPECIFIC BACKEND RULES
+
+When creating a license for a firefighter:
+
+1.  **Automatic `bomberoId` Handling:** If the `bomberoId` is not provided in the request (e.g., when a firefighter is creating a license for themselves), the backend must automatically determine the `bomberoId` of the logged-in user and use that.
+2.   **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
+
+## LICENSING MODULE SPECIFIC FRONTEND RULES
+
+When creating a license for a firefighter:
+
+1.  **Obtain `bomberoId`:** If `mostrarSelectorBombero` is false, the frontend must obtain the `bomberoId` from the authentication state.
+2.  **`LicenciaForm` Component:** The `LicenciaForm` should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
+
+## GIT REPOSITORY RULES
+
+1.  **Main Repository:** The project's sole repository is `https://github.com/BenjaminHeresmann/SGIB-WEB.git` on the `main` branch.
+
+## DEPLOYMENT RULES
+
+When deploying to Vercel (frontend) and Railway (backend) as a monorepo:
+
+1. **Variables of Environment and URLs**
+   - **Backend (Railway):**
+     - Railway will provide a public URL (e.g., `https://tu-app.railway.app`).
+     - Update `CORS_ORIGIN` in the `.env` of Railway to allow the Vercel domain.
+   - **Frontend (Vercel):**
+     - Instead of `http://localhost:3002`, use an environment variable for the backend URL.
+
+2. **Files to Modify**
+   - Create a `.env` file in the frontend.
+   - Modify:
+     - `api.js`: Use environment variable.
+     - `LicenciaForm.jsx`: Use environment variable.
+     - `AsignarMaterialDialog.jsx`: Use `api.js`.
 
 ## BOMBERO (FIREFIGHTER) STATES
 
@@ -229,7 +265,7 @@ The estado management system has been fully implemented with the following compo
 When creating a license for a firefighter:
 
 1.  **Automatic `bomberoId` Handling:** If the `bomberoId` is not provided in the request (e.g., when a firefighter is creating a license for themselves), the backend must automatically determine the `bomberoId` of the logged-in user and use that.
-2.  **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
+2.   **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
 
 ## LICENSING MODULE SPECIFIC FRONTEND RULES
 
@@ -237,3 +273,72 @@ When creating a license for a firefighter:
 
 1.  **Obtain `bomberoId`:** If `mostrarSelectorBombero` is false, the frontend must obtain the `bomberoId` from the authentication state.
 2.  **`LicenciaForm` Component:** The `LicenciaForm` should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
+
+## GIT REPOSITORY RULES
+
+1.  **Main Repository:** The project's sole repository is `https://github.com/BenjaminHeresmann/SGIB-WEB.git` on the `main` branch.
+
+## DEPLOYMENT RULES
+
+When deploying to Vercel (frontend) and Railway (backend) as a monorepo:
+
+### **Environment Variables and URLs**
+
+#### **Backend (Railway):**
+- Railway will provide a public URL (e.g., `https://sgib-web-production.up.railway.app`)
+- Configure the following environment variables in Railway:
+  ```env
+  NODE_ENV=production
+  PORT=3002
+  DATABASE_URL=mongodb+srv://user:pass@cluster.mongodb.net/sistema-bomberos?retryWrites=true&w=majority
+  JWT_SECRET=<strong-random-secret>
+  JWT_EXPIRE=7d
+  CORS_ORIGIN=https://sgib-web.vercel.app,https://www.sgib-web.vercel.app
+  ENABLE_RATE_LIMIT=true
+  RATE_LIMIT_WINDOW_MS=900000
+  RATE_LIMIT_MAX_REQUESTS=100
+  BCRYPT_SALT_ROUNDS=12
+  ```
+
+#### **Frontend (Vercel):**
+- Configure the following environment variables in Vercel:
+  ```env
+  VITE_API_URL=https://sgib-web-production.up.railway.app/api
+  VITE_ENV=production
+  ```
+
+### **Files Modified for Deployment:**
+
+1. **Frontend:**
+   - ✅ `client/.env` and `client/.env.example` created
+   - ✅ `client/src/services/api.js`: Uses `import.meta.env.VITE_API_URL`
+   - ✅ `client/src/components/licencias/LicenciaForm.jsx`: Uses environment variable
+   - ✅ `client/src/components/carros/AsignarMaterialDialog.jsx`: Uses `api.js` instance
+
+2. **Backend:**
+   - ✅ `server/src/index.js`: CORS configured dynamically with `CORS_ORIGIN.split(',')`
+   - ✅ `server/.env.example`: Updated with production examples
+
+3. **Configuration Files:**
+   - ✅ `vercel.json`: Vercel deployment configuration
+   - ✅ `railway.json`: Railway deployment configuration
+   - ✅ `server/Procfile`: Railway process file
+   - ✅ `server/package.json`: Added `postinstall` script for Prisma
+
+### **Important Notes:**
+
+- **vite.config.js:** Proxy is only for local development and does NOT affect production
+- **CORS:** Backend accepts multiple origins separated by commas in `CORS_ORIGIN`
+- **Database:** MongoDB Atlas connection string must be set in Railway's `DATABASE_URL`
+- **JWT Secret:** Use a strong, unique secret for production (generate with `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`)
+
+### **Deployment Checklist:**
+
+1. [ ] Push all changes to `main` branch
+2. [ ] Deploy backend to Railway with correct environment variables
+3. [ ] Copy Railway URL
+4. [ ] Deploy frontend to Vercel with `VITE_API_URL` pointing to Railway
+5. [ ] Update `CORS_ORIGIN` in Railway with Vercel URL
+6. [ ] Test authentication and API calls
+7. [ ] Verify MongoDB connection
+8. [ ] Check CORS is working correctly

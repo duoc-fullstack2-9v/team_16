@@ -60,8 +60,9 @@ const LicenciaForm = ({
       // Buscar el bombero asociado al usuario
       const fetchBomberoId = async () => {
         try {
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
           const token = localStorage.getItem('bomberosToken');
-          const response = await fetch('http://localhost:3002/api/bomberos/me', {
+          const response = await fetch(`${API_URL}/bomberos/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (response.ok) {
