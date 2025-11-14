@@ -18,13 +18,16 @@ This file defines all project rules, coding standards, workflow guidelines, refe
 
 *   All project-related information is stored in markdown files in the root directory.
 *   `ANALISIS_COMPLETO_PROYECTO.md`: Comprehensive project analysis document, including architecture, database schema, API endpoints, authentication system, frontend structure, data flows, resolved issues, and a guide for creating new modules. This document is automatically updated after major feature implementations.
+*   `DEPLOY_GUIDE.md`: Guide containing project deployment instructions.
+*   `INTEGRACION_ESTADOS_COMPLETA.md`: Guía completa with instructions de prueba
+*   `copilot-instructions.md` - Updated with new rules
 
 ## CODING STANDARDS
 
 *   **General:** Follow established coding conventions for Javascript/Typescript, React, Node.js and MongoDB.
 *   **Prisma:** Use Prisma for database interactions. Ensure correct handling of MongoDB ObjectIds. When querying data from the `Bombero` model, use `nombres` instead of `nombre`. Ensure you are using `fotoUrl` instead of `fotoPerfil`. Ensure that the `User` model does not use the `apellido` field.
-*   **Frontend:** Use Redux for state management. Organize components by module. When working with IDs in the frontend, ensure that you are not using `parseInt()` on IDs obtained from MongoDB. When interacting with local storage, ensure the correct token name (`bomberosToken`) is used. When sending `bomberoId` from the frontend, ensure it is sent as a string, not an integer. The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
-*   **Backend:** Use Joi for input validation. Implement proper authentication and authorization. Access user data from `req.user`, not `req.usuario`. When validating user roles, ensure the correct role name is being checked (e.g., `'Administrador'`).
+*   **Frontend:** Use Redux for state management. Organize components by module. When working with IDs in the frontend, ensure that you are not using `parseInt()` on IDs obtained from MongoDB. When interacting with local storage, ensure the correct token name (`bomberosToken`) is used. When sending `bomberoId` from the frontend, ensure it is sent as a string, not an integer. The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`). The proxy setting in `vite.config.js` is only for local development and does NOT affect production
+*   **Backend:** Use Joi for input validation. Implement proper authentication and authorization. Access user data from `req.user`, not `req.usuario`. When validating user roles, ensure the correct role name is being checked (e.g., `'Administrador'`). The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
 *   **IDs:** When working with MongoDB and Prisma, handle IDs as strings (ObjectIds), not integers. Avoid using `parseInt()` on IDs obtained from `req.params.id`. Validate ObjectIds using `!cargoId || cargoId.length !== 24` and `Joi.string().length(24).hex()`.
 *   **Authentication:** Ensure the correct token name (`bomberosToken`) is used when retrieving the token from local storage.
 *   **Backend Authentication:** Use `req.user` to access user data from the authentication middleware. When accessing user data in the backend, always use `req.user` and not `req.usuario`.
@@ -76,7 +79,7 @@ When creating new modules, follow these steps:
 
 ## LICENSING MODULE SPECIFIC RULES
 
-1.  **License Types:** The system must support the following license types: Medical, Vacation, Personal Reasons, Studies, Labor, and Other (with a field for specifying the reason). Administrators should be able to add additional license types to the system.
+1.  **License Types:** The system must support the following license types: Medical, Vacation, Personal Reasons, Studies, Labor, and Other (with a field for specifying the reason). Administrators should be able to add additional license types to the system. Administrators should be able to add additional license types to the system.
 2.  **License Duration:** Licenses must have a start and end date. They can be for hours or full days. There is no limit to the number of days per license type.
 3.  **Supporting Documentation:** Users can attach supporting documentation (images and PDF documents) to their license requests, but this is not mandatory.
 4.  **License Statuses:** The license statuses are: Pending, Approved, Rejected, Cancelled, Active, and Finalized.
@@ -92,7 +95,7 @@ When creating new modules, follow these steps:
 When creating a license for a firefighter:
 
 1.  **Automatic `bomberoId` Handling:** If the `bomberoId` is not provided in the request (e.g., when a firefighter is creating a license for themselves), the backend must automatically determine the `bomberoId` of the logged-in user and use that.
-2.   **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
+2.  **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
 
 ## LICENSING MODULE SPECIFIC FRONTEND RULES
 
@@ -109,19 +112,156 @@ When creating a license for a firefighter:
 
 When deploying to Vercel (frontend) and Railway (backend) as a monorepo:
 
-1. **Variables of Environment and URLs**
-   - **Backend (Railway):**
-     - Railway will provide a public URL (e.g., `https://tu-app.railway.app`).
-     - Update `CORS_ORIGIN` in the `.env` of Railway to allow the Vercel domain.
-   - **Frontend (Vercel):**
-     - Instead of `http://localhost:3002`, use an environment variable for the backend URL.
+### **Environment Variables and URLs**
 
-2. **Files to Modify**
-   - Create a `.env` file in the frontend.
-   - Modify:
-     - `api.js`: Use environment variable.
-     - `LicenciaForm.jsx`: Use environment variable.
-     - `AsignarMaterialDialog.jsx`: Use `api.js`.
+#### **Backend (Railway):**
+- Railway will provide a public URL (e.g., `https://sgib-web-production.up.railway.app`)
+- Configure the following environment variables in Railway:
+  ```env
+  NODE_ENV=production
+  PORT=3002
+  DATABASE_URL=mongodb+srv://user:pass@cluster.mongodb.net/sistema-bomberos?retryWrites=true&w=majority
+  JWT_SECRET=<strong-random-secret>
+  JWT_EXPIRE=7d
+  CORS_ORIGIN=https://sgib-web.vercel.app,https://www.sgib-web.vercel.app
+  ENABLE_RATE_LIMIT=true
+  RATE_LIMIT_WINDOW_MS=900000
+  RATE_LIMIT_MAX_REQUESTS=100
+  BCRYPT_SALT_ROUNDS=12
+  ```
+
+#### **Frontend (Vercel):**
+- Configure the following environment variables in Vercel:
+  ```env
+  VITE_API_URL=https://sgib-web-production.up.railway.app/api
+  VITE_ENV=production
+  ```
+
+### **Files Modified for Deployment:**
+
+1. **Frontend:**
+   - ✅ `client/.env` and `client/.env.example` created
+   - ✅ `client/src/services/api.js`: Uses `import.meta.env.VITE_API_URL`
+   - ✅ `client/src/components/licencias/LicenciaForm.jsx`: Uses environment variable
+   - ✅ `client/src/components/carros/AsignarMaterialDialog.jsx`: Uses `api.js` instance
+
+2. **Backend:**
+   - ✅ `server/src/index.js`: CORS configured dynamically with `CORS_ORIGIN.split(',')`
+   - ✅ `server/.env.example`: Updated with production examples
+
+3. **Configuration Files:**
+   - ✅ `vercel.json`: Vercel deployment configuration
+   - ✅ `railway.json`: Railway deployment configuration
+   - ✅ `server/Procfile`: Railway process file
+   - ✅ `server/package.json`: Added `postinstall` script for Prisma
+
+### **Important Notes:**
+
+- **vite.config.js:** Proxy is only for local development and does NOT affect production
+- **CORS:** Backend accepts multiple origins separated by commas in `CORS_ORIGIN`
+- **Database:** MongoDB Atlas connection string must be set in Railway's `DATABASE_URL`
+- **JWT Secret:** Use a strong, unique secret for production (generate with `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`)
+
+### **Deployment Checklist:**
+
+1. [ ] Push all changes to `main` branch
+2. [ ] Deploy backend to Railway with correct environment variables
+3. [ ] Copy Railway URL
+4. [ ] Deploy frontend to Vercel with `VITE_API_URL` pointing to Railway
+5. [ ] Update `CORS_ORIGIN` in Railway with Vercel URL
+6. [ ] Test authentication and API calls
+7. [ ] Verify MongoDB connection
+8. [ ] Check CORS is working correctly
+
+#### **Deployment to AWS S3 + CloudFront (Frontend)**
+*   **Step 1: Update .env and CORS_ORIGIN**
+    *   Set `VITE_API_URL` in `.env` to Railway backend URL:
+        ```
+        VITE_API_URL=https://sistema-bomberos-server-production.up.railway.app/api
+        ```
+    *   Update `CORS_ORIGIN` in Railway to include AWS S3 website URL:
+        ```
+        CORS_ORIGIN=http://localhost:5173,https://sgib-web-frontend.s3-website-us-east-1.amazonaws.com
+        ```
+*   **Step 2: Build the Frontend**
+    ```bash
+    cd client
+    npm run build
+    ```
+*   **Step 3: Create an S3 Bucket**
+    *   Go to AWS Management Console and open the S3 service.
+    *   Click "Create bucket".
+    *   Bucket name: `sgib-web-frontend` (or a unique name).
+    *   Region: Choose a region close to your users.
+    *   Object Ownership: ACLs disabled
+    *   Block Public Access settings: Uncheck "Block all public access". Acknowledge the warning.
+    *   Bucket Versioning: Disable.
+    *   Default encryption: Disable.
+    *   Click "Create bucket".
+*   **Step 4: Configure S3 Bucket for Static Website Hosting**
+    *   Go to the bucket you created.
+    *   Go to the "Properties" tab.
+    *   Scroll down to "Static website hosting" and click "Edit".
+    *   Select "Enable".
+    *   Hosting type: "Host a static website".
+    *   Index document: `index.html`.
+    *   Error document: `index.html`.
+    *   Click "Save changes".
+*   **Step 5: Update Bucket Policy for Public Access**
+    *   Go to the "Permissions" tab.
+    *   In the "Bucket policy" section, click "Edit".
+    *   Add the following bucket policy, replacing `sgib-web-frontend` with your bucket name and region:
+    ```json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::sgib-web-frontend/*"
+            }
+        ]
+    }
+    ```
+    *   Click "Save changes".
+*   **Step 6: Upload Build Output to S3**
+    *   Go to the "Objects" tab.
+    *   Click "Upload".
+    *   Upload all files from the `client/dist` directory.
+    *   Set the following metadata for `index.html`:
+        *   Cache-Control: `max-age=3600` (or another value).
+*   **Step 7: Create a CloudFront Distribution**
+    *   Go to the CloudFront service in the AWS Management Console.
+    *   Click "Create distribution".
+    *   Origin domain: Select your S3 bucket endpoint from the dropdown (e.g., `sgib-web-frontend.s3-website-us-east-1.amazonaws.com`).
+    *   Viewer protocol policy: Redirect HTTP to HTTPS.
+    *   Allowed HTTP methods: GET, HEAD, OPTIONS.
+    *   Cache key and origin requests: Legacy cache settings.
+    *   Create distribution.
+*   **Step 8: Configure CloudFront Distribution**
+    *   Go to your CloudFront distribution.
+    *   Go to the "Origins" tab.
+    *   Select the origin and click "Edit".
+    *   Origin access: Public.
+    *   Go to the "Behaviors" tab.
+    *   Select the default behavior and click "Edit".
+    *   Viewer protocol policy: Redirect HTTP to HTTPS.
+    *   Allowed HTTP methods: GET, HEAD, OPTIONS.
+    *   Cached key and origin requests: Optimized for Caching.
+    *   Compress objects automatically: Yes.
+    *   Create distribution.
+*   **Step 9: Invalidate CloudFront Cache**
+    *   Go to the "Invalidations" tab.
+    *   Click "Create invalidation".
+    *   Path: `/*` (to invalidate all files).
+    *   Click "Create invalidation".
+
+## GIT WORKFLOW RULES
+
+1.  When encountering issues checking out a branch due to untracked files, consider stashing changes (`git stash`), removing the conflicting directory, or cleaning the working directory.
+2.  The project's sole repository is `https://github.com/BenjaminHeresmann/SGIB-WEB.git` on the `main` branch.
 
 ## BOMBERO (FIREFIGHTER) STATES
 
@@ -218,7 +358,7 @@ The estado management system has been fully implemented with the following compo
 ### Frontend Components
 *   **CambiarEstadoDialog** - Dialog for changing bombero estado
     - Located at: `client/src/components/bomberos/CambiarEstadoDialog.jsx`
-    - Fields: Estado dropdown, motivo (required, max 200 chars), observaciones (optional, max 500 chars)
+    - Fields: Estado dropdown, motivo (required, max 200 chars), observaciones (optional)
     - Validations: Prevents same estado, requires motivo
     - Warnings for different estados
 *   **BomberosList** - Integrated estado management button
@@ -246,6 +386,7 @@ The estado management system has been fully implemented with the following compo
 *   All estado changes are audited in HistorialEstadoBombero
 *   Estado and Licencias are independent systems
 *   The `LicenciaForm` component should only return the content of the form (without the Dialog wrapper). The `Dialog` component should be handled in the parent component (`LicenciasPage.jsx`).
+*   **Frontend (React + Vite)**: The proxy setting in `vite.config.js` is only for local development and does NOT affect production
 
 ## LICENSING MODULE SPECIFIC RULES (UPDATED)
 
@@ -265,7 +406,7 @@ The estado management system has been fully implemented with the following compo
 When creating a license for a firefighter:
 
 1.  **Automatic `bomberoId` Handling:** If the `bomberoId` is not provided in the request (e.g., when a firefighter is creating a license for themselves), the backend must automatically determine the `bomberoId` of the logged-in user and use that.
-2.   **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
+2.  **Joi Validation:** The `bomberoId` field should be optional in the Joi schema for the `/api/licencias` endpoint, to accommodate scenarios where the backend automatically determines the ID.
 
 ## LICENSING MODULE SPECIFIC FRONTEND RULES
 
@@ -342,3 +483,93 @@ When deploying to Vercel (frontend) and Railway (backend) as a monorepo:
 6. [ ] Test authentication and API calls
 7. [ ] Verify MongoDB connection
 8. [ ] Check CORS is working correctly
+
+#### **Deployment to AWS S3 + CloudFront (Frontend)**
+*   **Step 1: Update .env and CORS_ORIGIN**
+    *   Set `VITE_API_URL` in `.env` to Railway backend URL:
+        ```
+        VITE_API_URL=https://sistema-bomberos-server-production.up.railway.app/api
+        ```
+    *   Update `CORS_ORIGIN` in Railway to include AWS S3 website URL:
+        ```
+        CORS_ORIGIN=http://localhost:5173,https://sgib-web-frontend.s3-website-us-east-1.amazonaws.com
+        ```
+*   **Step 2: Build the Frontend**
+    ```bash
+    cd client
+    npm run build
+    ```
+*   **Step 3: Create an S3 Bucket**
+    *   Go to AWS Management Console and open the S3 service.
+    *   Click "Create bucket".
+    *   Bucket name: `sgib-web-frontend` (or a unique name).
+    *   Region: Choose a region close to your users.
+    *   Object Ownership: ACLs disabled
+    *   Block Public Access settings: Uncheck "Block all public access". Acknowledge the warning.
+    *   Bucket Versioning: Disable.
+    *   Default encryption: Disable.
+    *   Click "Create bucket".
+*   **Step 4: Configure S3 Bucket for Static Website Hosting**
+    *   Go to the bucket you created.
+    *   Go to the "Properties" tab.
+    *   Scroll down to "Static website hosting" and click "Edit".
+    *   Select "Enable".
+    *   Hosting type: "Host a static website".
+    *   Index document: `index.html`.
+    *   Error document: `index.html`.
+    *   Click "Save changes".
+*   **Step 5: Update Bucket Policy for Public Access**
+    *   Go to the "Permissions" tab.
+    *   In the "Bucket policy" section, click "Edit".
+    *   Add the following bucket policy, replacing `sgib-web-frontend` with your bucket name and region:
+    ```json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::sgib-web-frontend/*"
+            }
+        ]
+    }
+    ```
+    *   Click "Save changes".
+*   **Step 6: Upload Build Output to S3**
+    *   Go to the "Objects" tab.
+    *   Click "Upload".
+    *   Upload all files from the `client/dist` directory.
+    *   Set the following metadata for `index.html`:
+        *   Cache-Control: `max-age=3600` (or another value).
+*   **Step 7: Create a CloudFront Distribution**
+    *   Go to the CloudFront service in the AWS Management Console.
+    *   Click "Create distribution".
+    *   Origin domain: Select your S3 bucket endpoint from the dropdown (e.g., `sgib-web-frontend.s3-website-us-east-1.amazonaws.com`).
+    *   Viewer protocol policy: Redirect HTTP to HTTPS.
+    *   Allowed HTTP methods: GET, HEAD, OPTIONS.
+    *   Cache key and origin requests: Legacy cache settings.
+    *   Create distribution.
+*   **Step 8: Configure CloudFront Distribution**
+    *   Go to your CloudFront distribution.
+    *   Go to the "Origins" tab.
+    *   Select the origin and click "Edit".
+    *   Origin access: Public.
+    *   Go to the "Behaviors" tab.
+    *   Select the default behavior and click "Edit".
+    *   Viewer protocol policy: Redirect HTTP to HTTPS.
+    *   Allowed HTTP methods: GET, HEAD, OPTIONS.
+    *   Cached key and origin requests: Optimized for Caching.
+    *   Compress objects automatically: Yes.
+    *   Create distribution.
+*   **Step 9: Invalidate CloudFront Cache**
+    *   Go to the "Invalidations" tab.
+    *   Click "Create invalidation".
+    *   Path: `/*` (to invalidate all files).
+    *   Click "Create invalidation".
+
+## GIT WORKFLOW RULES
+
+1.  When encountering issues checking out a branch due to untracked files, consider stashing changes (`git stash`), removing the conflicting directory, or cleaning the working directory.
+2.  The project's sole repository is `https://github.com/BenjaminHeresmann/SGIB-WEB.git` on the
