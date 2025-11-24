@@ -2,13 +2,19 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
 // Generar token JWT
-export const generateToken = (userId, email) => {
+export const generateToken = (userId, email, rol = null, tipo = null) => {
+  const payload = { 
+    userId, 
+    email,
+    iat: Math.floor(Date.now() / 1000)
+  }
+  
+  // Agregar rol y tipo si están disponibles
+  if (rol) payload.rol = rol
+  if (tipo) payload.tipo = tipo
+  
   return jwt.sign(
-    { 
-      userId, 
-      email,
-      iat: Math.floor(Date.now() / 1000)
-    },
+    payload,
     process.env.JWT_SECRET,
     { 
       expiresIn: process.env.JWT_EXPIRE || '7d',

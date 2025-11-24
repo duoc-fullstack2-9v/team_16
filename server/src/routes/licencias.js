@@ -321,16 +321,20 @@ router.get('/', authenticateToken, async (req, res) => {
     // Construir filtros
     const where = {};
     
-    // Si es bombero, solo ver sus propias licencias
-    if (req.user.rol === 'Bombero') {
+    // Si NO es administrador, solo ver sus propias licencias
+    if (req.user.tipo !== 'admin') {
       // Obtener el bombero asociado al usuario
       const bombero = await prisma.bombero.findFirst({
-        where: { usuarioId: req.user.id },
+        where: { usuarioId: req.user.userId },
       });
       
-      if (bombero) {
-        where.bomberoId = bombero.id;
+      if (!bombero) {
+        return res.status(404).json({ 
+          mensaje: 'No se encontró un bombero asociado a este usuario' 
+        });
       }
+      
+      where.bomberoId = bombero.id;
     } else if (bomberoId) {
       // Si es admin y especifica bomberoId
       where.bomberoId = bomberoId;

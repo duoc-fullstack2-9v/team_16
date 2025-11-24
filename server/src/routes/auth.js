@@ -73,8 +73,8 @@ router.post('/login', async (req, res) => {
       })
     }
 
-    // Generar token JWT
-    const token = generateToken(user.id, user.email)
+    // Generar token JWT con rol y tipo
+    const token = generateToken(user.id, user.email, user.rol, user.tipo)
 
     // Sanitizar datos del usuario
     const sanitizedUser = sanitizeUser(user)
