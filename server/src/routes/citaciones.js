@@ -37,10 +37,10 @@ const citacionSchema = Joi.object({
   estado: Joi.string().valid('Programada', 'Realizada', 'Cancelada').default('Programada').messages({
     'any.only': 'El estado debe ser: Programada, Realizada o Cancelada'
   }),
-  bomberos: Joi.array().items(Joi.number().integer().positive()).optional().messages({
+  bomberos: Joi.array().items(Joi.string().length(24).hex()).optional().messages({
     'array.base': 'Los bomberos deben ser un array de IDs',
-    'number.base': 'Cada ID de bombero debe ser un número',
-    'number.positive': 'Los IDs deben ser números positivos'
+    'string.length': 'Cada ID de bombero debe tener 24 caracteres',
+    'string.hex': 'Los IDs deben ser hexadecimales válidos'
   })
 })
 
@@ -70,10 +70,10 @@ const citacionUpdateSchema = Joi.object({
   estado: Joi.string().valid('Programada', 'Realizada', 'Cancelada').optional().messages({
     'any.only': 'El estado debe ser: Programada, Realizada o Cancelada'
   }),
-  bomberos: Joi.array().items(Joi.number().integer().positive()).optional().messages({
+  bomberos: Joi.array().items(Joi.string().length(24).hex()).optional().messages({
     'array.base': 'Los bomberos deben ser un array de IDs',
-    'number.base': 'Cada ID de bombero debe ser un número',
-    'number.positive': 'Los IDs deben ser números positivos'
+    'string.length': 'Cada ID de bombero debe tener 24 caracteres',
+    'string.hex': 'Los IDs deben ser hexadecimales válidos'
   })
 }).min(1).messages({
   'object.min': 'Debe proporcionar al menos un campo para actualizar'
@@ -81,7 +81,7 @@ const citacionUpdateSchema = Joi.object({
 
 // Schema para asignación de bomberos
 const asignacionSchema = Joi.object({
-  bomberosIds: Joi.array().items(Joi.number().integer().positive()).min(1).required().messages({
+  bomberosIds: Joi.array().items(Joi.string().length(24).hex()).min(1).required().messages({
     'array.base': 'Los bomberos deben ser un array de IDs',
     'array.min': 'Debe seleccionar al menos un bombero',
     'any.required': 'Los bomberos son requeridos'
@@ -216,9 +216,9 @@ router.get('/', authenticateToken, async (req, res) => {
 // GET /api/citaciones/:id - Obtener citación específica
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const citacionId = parseInt(req.params.id)
+    const citacionId = req.params.id
     
-    if (isNaN(citacionId)) {
+    if (!citacionId || citacionId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de citación inválido'
@@ -355,9 +355,9 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/citaciones/:id - Actualizar citación
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const citacionId = parseInt(req.params.id)
+    const citacionId = req.params.id
     
-    if (isNaN(citacionId)) {
+    if (!citacionId || citacionId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de citación inválido'
@@ -467,9 +467,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE /api/citaciones/:id - Eliminar citación
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const citacionId = parseInt(req.params.id)
+    const citacionId = req.params.id
     
-    if (isNaN(citacionId)) {
+    if (!citacionId || citacionId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de citación inválido'
@@ -519,9 +519,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 // POST /api/citaciones/:id/asignar - Asignar bomberos a citación
 router.post('/:id/asignar', authenticateToken, async (req, res) => {
   try {
-    const citacionId = parseInt(req.params.id)
+    const citacionId = req.params.id
     
-    if (isNaN(citacionId)) {
+    if (!citacionId || citacionId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'ID de citación inválido'
@@ -619,10 +619,10 @@ router.post('/:id/asignar', authenticateToken, async (req, res) => {
 // PUT /api/citaciones/:citacionId/bomberos/:bomberoId/asistencia - Actualizar asistencia
 router.put('/:citacionId/bomberos/:bomberoId/asistencia', authenticateToken, async (req, res) => {
   try {
-    const citacionId = parseInt(req.params.citacionId)
-    const bomberoId = parseInt(req.params.bomberoId)
+    const citacionId = req.params.citacionId
+    const bomberoId = req.params.bomberoId
     
-    if (isNaN(citacionId) || isNaN(bomberoId)) {
+    if (!citacionId || citacionId.length !== 24 || !bomberoId || bomberoId.length !== 24) {
       return res.status(400).json({
         success: false,
         message: 'IDs inválidos'
