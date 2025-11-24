@@ -167,9 +167,10 @@ router.get('/', authenticateToken, async (req, res) => {
 // GET /api/bomberos/:id - Obtener bombero específico
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const bomberoId = parseInt(req.params.id)
+    const bomberoId = req.params.id
     
-    if (isNaN(bomberoId)) {
+    // Validar que el ID sea un ObjectId válido de MongoDB (24 caracteres hexadecimales)
+    if (!bomberoId || bomberoId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(bomberoId)) {
       return res.status(400).json({
         success: false,
         message: 'ID de bombero inválido'
@@ -267,9 +268,10 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/bomberos/:id - Actualizar bombero
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const bomberoId = parseInt(req.params.id)
+    const bomberoId = req.params.id
     
-    if (isNaN(bomberoId)) {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!bomberoId || bomberoId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(bomberoId)) {
       return res.status(400).json({
         success: false,
         message: 'ID de bombero inválido'
@@ -327,9 +329,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE /api/bomberos/:id - Eliminar bombero (soft delete)
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const bomberoId = parseInt(req.params.id)
+    const bomberoId = req.params.id
     
-    if (isNaN(bomberoId)) {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!bomberoId || bomberoId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(bomberoId)) {
       return res.status(400).json({
         success: false,
         message: 'ID de bombero inválido'
