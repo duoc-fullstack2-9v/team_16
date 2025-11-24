@@ -24,18 +24,19 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relaciones con ObjectId
-  bomberosCreados            Bombero[]                   @relation("BomberoCreatedBy")
-  citacionesCreadas          Citacion[]                  @relation("CitacionCreatedBy")
-  citacionesBombero          BomberoCitacion[]
-  carrosCreados              Carro[]
-  historialCarros            HistorialCarro[]
-  historialCajoneras         HistorialCajonera[]
-  guardiasMensualesCreadas   GuardiaMensual[]            @relation("GuardiaMensualCreatedBy")
-  guardiasNocturnasAsignadas GuardiaDiaBombero[]
-  plantillasCreadas          PlantillaGuardia[]          @relation("PlantillaGuardiaCreatedBy")
-  licenciasRevisadas         Licencia[]                  @relation("LicenciaRevisadaPor")
-  licenciasCreadas           Licencia[]                  @relation("LicenciaCreadaPor")
-  historialEstadosCambiados  HistorialEstadoBombero[]    @relation("HistorialEstadoCambiadoPor")
+  bombero                        Bombero?                    @relation("BomberoUsuario")
+  bomberosCreados                Bombero[]                   @relation("BomberoCreatedBy")
+  citacionesCreadas              Citacion[]                  @relation("CitacionCreatedBy")
+  citacionesBombero              BomberoCitacion[]
+  carrosCreados                  Carro[]
+  historialCarros                HistorialCarro[]
+  historialCajoneras             HistorialCajonera[]
+  guardiasMensualesCreadas       GuardiaMensual[]            @relation("GuardiaMensualCreatedBy")
+  guardiasNocturnasAsignadas     GuardiaDiaBombero[]
+  plantillasCreadas              PlantillaGuardia[]          @relation("PlantillaGuardiaCreatedBy")
+  licenciasRevisadas             Licencia[]                  @relation("LicenciaRevisadaPor")
+  licenciasCreadas               Licencia[]                  @relation("LicenciaCreadaPor")
+  historialEstadosCambiados      HistorialEstadoBombero[]    @relation("HistorialEstadoCambiadoPor")
 
   @@map("users")
 }
@@ -57,9 +58,11 @@ model Bombero {
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
   createdById             String?   @db.ObjectId
+  usuarioId               String?   @unique @db.ObjectId // Usuario asociado a este bombero
 
   // Relaciones
   createdBy              User?                    @relation("BomberoCreatedBy", fields: [createdById], references: [id])
+  usuario                User?                    @relation("BomberoUsuario", fields: [usuarioId], references: [id])
   citaciones             BomberoCitacion[]
   asignacionesCargo      AsignacionCargo[]
   asignacionesMaterial   AsignacionMaterial[]
