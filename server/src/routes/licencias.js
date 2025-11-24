@@ -597,14 +597,9 @@ router.post('/', authenticateToken, async (req, res) => {
     
     // Si no se proporciona bomberoId, obtenerlo del usuario autenticado
     if (!bomberoId || bomberoId.trim() === '') {
-      // Buscar el bombero asociado al usuario autenticado
+      // Buscar el bombero asociado al usuario autenticado usando usuarioId
       const bomberoUsuario = await prisma.bombero.findFirst({
-        where: { 
-          OR: [
-            { email: req.user.email },
-            { createdById: req.user.id }
-          ]
-        },
+        where: { usuarioId: req.user.userId }
       });
       
       if (!bomberoUsuario) {
