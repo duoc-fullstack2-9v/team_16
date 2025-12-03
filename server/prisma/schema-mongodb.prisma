@@ -1,0 +1,451 @@
+// Prisma schema for MongoDB
+// Migración desde SQLite a MongoDB Atlas
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== MODELOS CORE ====================
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       String   // Comandante, Capitán, Teniente, Sargento, Bombero
+  tipo      String   @default("usuario") // 'admin' o 'usuario'
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones con ObjectId
+  bomberosCreados            Bombero[]              @relation("BomberoCreatedBy")
+  citacionesCreadas          Citacion[]             @relation("CitacionCreatedBy")
+  citacionesBombero          BomberoCitacion[]
+  carrosCreados              Carro[]
+  historialCarros            HistorialCarro[]
+  historialCajoneras         HistorialCajonera[]
+  guardiasMensualesCreadas   GuardiaMensual[]       @relation("GuardiaMensualCreatedBy")
+  guardiasNocturnasAsignadas GuardiaDiaBombero[]
+  plantillasCreadas          PlantillaGuardia[]     @relation("PlantillaGuardiaCreatedBy")
+
+  @@map("users")
+}
+
+model Bombero {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  nombres      String
+  apellidos    String
+  rango        String    // Bombero, Cabo, Sargento, etc.
+  especialidad String?
+  estado       String    @default("Activo") // Activo, Licencia, Inactivo
+  telefono     String?
+  email        String?
+  direccion    String?
+  fechaIngreso DateTime?
+  fotoUrl      String?   // URL de la foto del bombero
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  createdById  String?   @db.ObjectId
+
+  // Relaciones
+  createdBy              User?                    @relation("BomberoCreatedBy", fields: [createdById], references: [id])
+  citaciones             BomberoCitacion[]
+  asignacionesCargo      AsignacionCargo[]
+  asignacionesMaterial   AsignacionMaterial[]
+  conductorHabilitado    ConductorHabilitado[]
+  guardiasNocturnas      GuardiaDiaBombero[]
+  plantillasGuardias     PlantillaDiaBombero[]
+
+  @@map("bomberos")
+}
+
+model Cargo {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  nombre       String            @unique
+  descripcion  String?
+  rama         String            // "ADMINISTRATIVA", "OPERATIVA", "CONSEJOS"
+  jerarquia    Int               // Orden jerárquico dentro de la rama
+  maxOcupantes Int               @default(1)
+  activo       Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  asignaciones AsignacionCargo[]
+
+  @@map("cargos")
+}
+
+model AsignacionCargo {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  cargoId       String    @db.ObjectId
+  bomberoId     String    @db.ObjectId
+  fechaInicio   DateTime  @default(now())
+  fechaFin      DateTime?
+  periodoAnio   Int       // Año del período
+  activo        Boolean   @default(true)
+  observaciones String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relaciones
+  cargo   Cargo   @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  bombero Bombero @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@map("asignaciones_cargos")
+}
+
+model Citacion {
+  id          String              @id @default(auto()) @map("_id") @db.ObjectId
+  titulo      String
+  fecha       DateTime
+  hora        String
+  lugar       String
+  motivo      String
+  estado      String              @default("Programada") // Programada, Realizada, Cancelada
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdById String?             @db.ObjectId
+  createdBy   User?               @relation("CitacionCreatedBy", fields: [createdById], references: [id])
+  bomberos    BomberoCitacion[]
+
+  @@map("citaciones")
+}
+
+model BomberoCitacion {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  bomberoId     String    @db.ObjectId
+  citacionId    String    @db.ObjectId
+  asistio       Boolean   @default(false)
+  observaciones String?
+  createdAt     DateTime  @default(now())
+  userId        String?   @db.ObjectId
+
+  // Relaciones
+  bombero  Bombero  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  citacion Citacion @relation(fields: [citacionId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([bomberoId, citacionId])
+  @@map("bomberos_citaciones")
+}
+
+model Solicitud {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  tipo            String    // Permiso, Licencia, Cambio de horario
+  descripcion     String
+  estado          String    @default("Pendiente") // Pendiente, Aprobada, Rechazada
+  fechaSolicitud  DateTime  @default(now())
+  fechaRespuesta  DateTime?
+  observaciones   String?
+  solicitanteId   Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("solicitudes")
+}
+
+model Evento {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  titulo      String
+  descripcion String
+  fecha       DateTime
+  lugar       String?
+  tipo        String   // Entrenamiento, Evento social, Ceremonia
+  estado      String   @default("Programado")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("eventos")
+}
+
+model Log {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  accion     String   // CREATE, UPDATE, DELETE, LOGIN
+  tabla      String?
+  registroId Int?
+  usuarioId  Int?
+  detalles   String?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("logs")
+}
+
+// ==================== MATERIAL MENOR ====================
+
+model Categoria {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  nombre        String      @unique
+  descripcion   String?
+  icono         String?
+  parentId      String?     @db.ObjectId
+  activo        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relaciones
+  parent        Categoria?  @relation("CategoriasJerarquia", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subcategorias Categoria[] @relation("CategoriasJerarquia")
+  materiales    Material[]
+
+  @@map("categorias")
+}
+
+model Material {
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+  nombre              String
+  descripcion         String?
+  fotoUrl             String?
+  categoriaId         String?              @db.ObjectId
+  estado              String               @default("Disponible") // Disponible, En Uso, Mantenimiento, Baja
+  tipo                String               // "individual" o "cantidad"
+  numeroSerie         String?
+  cantidad            Int?
+  unidadMedida        String?
+  fechaAdquisicion    DateTime?
+  ubicacionFisica     String?
+  fechaVencimiento    DateTime?
+  fechaMantencion     DateTime?
+  observaciones       String?
+  activo              Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  categoria           Categoria?           @relation(fields: [categoriaId], references: [id])
+  asignaciones        AsignacionMaterial[]
+
+  @@map("material")
+}
+
+model AsignacionMaterial {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  materialId       String    @db.ObjectId
+  bomberoId        String?   @db.ObjectId
+  carroId          String?   @db.ObjectId
+  cajoneraId       String?   @db.ObjectId
+  fechaAsignacion  DateTime  @default(now())
+  fechaDevolucion  DateTime?
+  motivo           String?
+  observaciones    String?
+  cantidadAsignada Int?
+  activo           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relaciones
+  material Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  bombero  Bombero?  @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  carro    Carro?    @relation("AsignacionMaterialCarro", fields: [carroId], references: [id], onDelete: Cascade)
+  cajonera Cajonera? @relation(fields: [cajoneraId], references: [id], onDelete: SetNull)
+
+  @@map("asignaciones_material")
+}
+
+// ==================== MATERIAL MAYOR ====================
+
+model Carro {
+  id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
+  nombre                  String
+  tipo                    String                   // "Bomba", "Escala", "Rescate", "Ambulancia"
+  marca                   String?
+  modelo                  String?
+  anioFabricacion         Int?
+  patente                 String                   @unique
+  estadoOperativo         String                   @default("Operativo")
+  capacidadAgua           Int?
+  capacidadEspuma         Int?
+  potenciaMotobomba       String?
+  capacidadMotobomba      String?
+  capacidadCarga          String?
+  fechaProximaMantencion  DateTime?
+  fechaRevisionTecnica    DateTime?
+  fechaPermisoCirculacion DateTime?
+  caracteristicas         Json?                    // Flexible para MongoDB
+  observaciones           String?
+  activo                  Boolean                  @default(true)
+  creadoPor               String?                  @db.ObjectId
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  cajoneras               Cajonera[]
+  asignacionesMaterial    AsignacionMaterial[]     @relation("AsignacionMaterialCarro")
+  conductoresHabilitados  ConductorHabilitado[]
+  mantenciones            MantencionCarro[]
+  historial               HistorialCarro[]
+  creador                 User?                    @relation(fields: [creadoPor], references: [id])
+
+  @@map("carros")
+}
+
+model Cajonera {
+  id            String               @id @default(auto()) @map("_id") @db.ObjectId
+  carroId       String               @db.ObjectId
+  nombre        String
+  estado        String               @default("Operativa")
+  observaciones String?
+  posicion      Int?
+  activo        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  carro         Carro                @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  materiales    AsignacionMaterial[]
+  historial     HistorialCajonera[]
+
+  @@map("cajoneras")
+}
+
+model ConductorHabilitado {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  carroId       String    @db.ObjectId
+  bomberoId     String    @db.ObjectId
+  fechaDesde    DateTime  @default(now())
+  fechaHasta    DateTime?
+  observaciones String?
+  activo        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  carro         Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  bombero       Bombero   @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@unique([carroId, bomberoId])
+  @@map("conductores_habilitados")
+}
+
+model MantencionCarro {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  carroId        String    @db.ObjectId
+  tipo           String
+  descripcion    String
+  fechaRealizada DateTime
+  proximaFecha   DateTime?
+  costo          Float?
+  realizadoPor   String?
+  observaciones  String?
+  documentos     Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  carro          Carro     @relation(fields: [carroId], references: [id], onDelete: Cascade)
+
+  @@map("mantenciones_carro")
+}
+
+model HistorialCarro {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  carroId     String   @db.ObjectId
+  tipo        String
+  descripcion String
+  cambios     Json?
+  usuarioId   String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+  carro       Carro    @relation(fields: [carroId], references: [id], onDelete: Cascade)
+  usuario     User?    @relation(fields: [usuarioId], references: [id])
+
+  @@map("historial_carro")
+}
+
+model HistorialCajonera {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  cajoneraId  String    @db.ObjectId
+  tipo        String
+  descripcion String
+  cambios     Json?
+  usuarioId   String?   @db.ObjectId
+  createdAt   DateTime  @default(now())
+  cajonera    Cajonera  @relation(fields: [cajoneraId], references: [id], onDelete: Cascade)
+  usuario     User?     @relation(fields: [usuarioId], references: [id])
+
+  @@map("historial_cajonera")
+}
+
+// ==================== GUARDIAS NOCTURNAS ====================
+
+model GuardiaMensual {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  mes            Int
+  anio           Int
+  minimoBomberos Int            @default(4)
+  notas          String?
+  creadoPorId    String?        @db.ObjectId
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  creadoPor      User?          @relation("GuardiaMensualCreatedBy", fields: [creadoPorId], references: [id])
+  dias           GuardiaDia[]
+
+  @@unique([mes, anio])
+  @@map("guardias_mensuales")
+}
+
+model GuardiaDia {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  fecha            DateTime
+  notas            String?
+  guardiaMensualId String              @db.ObjectId
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  guardiaMensual   GuardiaMensual      @relation(fields: [guardiaMensualId], references: [id], onDelete: Cascade)
+  bomberos         GuardiaDiaBombero[]
+
+  @@unique([guardiaMensualId, fecha])
+  @@map("guardias_dias")
+}
+
+model GuardiaDiaBombero {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  guardiaDiaId  String      @db.ObjectId
+  bomberoId     String      @db.ObjectId
+  comentario    String?
+  asignadoPorId String?     @db.ObjectId
+  createdAt     DateTime    @default(now())
+  guardiaDia    GuardiaDia  @relation(fields: [guardiaDiaId], references: [id], onDelete: Cascade)
+  bombero       Bombero     @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+  asignadoPor   User?       @relation(fields: [asignadoPorId], references: [id])
+
+  @@unique([guardiaDiaId, bomberoId])
+  @@map("guardias_dias_bomberos")
+}
+
+// ==================== PLANTILLAS GUARDIA ====================
+
+model PlantillaGuardia {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  nombre      String         @unique
+  descripcion String?
+  tipo        String         // "por_fecha" o "por_dia_semana"
+  creadoPorId String?        @db.ObjectId
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  creadoPor   User?          @relation("PlantillaGuardiaCreatedBy", fields: [creadoPorId], references: [id])
+  dias        PlantillaDia[]
+
+  @@map("plantillas_guardia")
+}
+
+model PlantillaDia {
+  id          String                @id @default(auto()) @map("_id") @db.ObjectId
+  plantillaId String                @db.ObjectId
+  diaNumero   Int?                  // 1-31 para tipo "por_fecha"
+  diaSemana   Int?                  // 0-6 para tipo "por_dia_semana"
+  notas       String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  plantilla   PlantillaGuardia      @relation(fields: [plantillaId], references: [id], onDelete: Cascade)
+  bomberos    PlantillaDiaBombero[]
+
+  @@map("plantillas_dias")
+}
+
+model PlantillaDiaBombero {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  plantillaDiaId String       @db.ObjectId
+  bomberoId      String       @db.ObjectId
+  createdAt      DateTime     @default(now())
+  plantillaDia   PlantillaDia @relation(fields: [plantillaDiaId], references: [id], onDelete: Cascade)
+  bombero        Bombero      @relation(fields: [bomberoId], references: [id], onDelete: Cascade)
+
+  @@unique([plantillaDiaId, bomberoId])
+  @@map("plantillas_dias_bomberos")
+}
