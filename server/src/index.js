@@ -7,6 +7,9 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+// Importar Swagger
+import { swaggerUi, specs } from './config/swagger.js'
+
 // Importar rutas
 import authRoutes from './routes/auth.js'
 import bomberosRoutes from './routes/bomberos.js'
@@ -38,9 +41,13 @@ const PORT = process.env.PORT || 3002 // Cambio de puerto temporal
 // MIDDLEWARE GLOBAL
 // ========================================
 
-// Seguridad
+// Seguridad - Configuración mínima para HTTP y Swagger
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Deshabilitado para Swagger UI
+  hsts: false, // No forzar HTTPS
+  crossOriginOpenerPolicy: false,
+  originAgentCluster: false,
 }))
 
 // CORS - Configuración dinámica para desarrollo y producción
@@ -106,6 +113,24 @@ app.get('/health', (req, res) => {
   })
 })
 
+// Swagger Documentation - Sin Helmet para evitar bloqueo de recursos
+app.use('/api-docs', (req, res, next) => {
+  res.removeHeader('Content-Security-Policy');
+  next();
+}, swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'SGIB API Documentation',
+  swaggerOptions: {
+    url: '/api-docs/swagger.json'
+  }
+}))
+
+// Endpoint para servir el JSON de Swagger
+app.get('/api-docs/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
+
 // API Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/bomberos', bomberosRoutes)
@@ -117,6 +142,26 @@ app.use('/api/material', materialRoutes)
 app.use('/api/carros', carrosRoutes)
 app.use('/api/guardias', guardiasRoutes)
 app.use('/api/licencias', licenciasRoutes)
+
+// API Info endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: '🚒 Sistema de Gestión Integral de Bomberos - API REST',
+    version: '1.0.0',
+    documentation: '/api-docs',
+    endpoints: {
+      auth: '/api/auth',
+      bomberos: '/api/bomberos',
+      licencias: '/api/licencias',
+      citaciones: '/api/citaciones',
+      cargos: '/api/cargos',
+      guardias: '/api/guardias',
+      carros: '/api/carros',
+      material: '/api/material'
+    }
+  })
+})
 
 // Ruta 404
 app.use('*', (req, res) => {

@@ -19,6 +19,10 @@
     "build:client": "cd client && npm run build",
     "build:server": "cd server && npm run build",
     "start": "cd server && npm start",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm test",
+    "test:server": "cd server && npm test",
+    "test:all": "concurrently \"npm run test:client\" \"npm run test:server\"",
     "prisma:studio": "cd server && npm run prisma:studio",
     "prisma:migrate": "cd server && npm run prisma:migrate",
     "prisma:generate": "cd server && npm run prisma:generate"

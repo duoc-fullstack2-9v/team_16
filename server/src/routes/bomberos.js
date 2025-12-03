@@ -52,6 +52,31 @@ const bomberoSchema = Joi.object({
   })
 })
 
+/**
+ * @swagger
+ * tags:
+ *   name: Bomberos
+ *   description: Gestión de bomberos
+ */
+
+/**
+ * @swagger
+ * /bomberos/me:
+ *   get:
+ *     summary: Obtener bombero del usuario autenticado
+ *     tags: [Bomberos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos del bombero
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Bombero'
+ *       404:
+ *         description: No se encontró bombero asociado
+ */
 // GET /api/bomberos/me - Obtener bombero del usuario autenticado
 router.get('/me', authenticateToken, async (req, res) => {
   try {
@@ -82,6 +107,60 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /bomberos:
+ *   get:
+ *     summary: Listar todos los bomberos
+ *     tags: [Bomberos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Cantidad por página
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Búsqueda por nombre o apellido
+ *       - in: query
+ *         name: estado
+ *         schema:
+ *           type: string
+ *           enum: [Activo, Suspendido, Dado de Baja, Renuncia]
+ *         description: Filtrar por estado
+ *     responses:
+ *       200:
+ *         description: Lista de bomberos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bombero'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ */
 // GET /api/bomberos - Listar bomberos con paginación y filtros
 router.get('/', authenticateToken, async (req, res) => {
   try {

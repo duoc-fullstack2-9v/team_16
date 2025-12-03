@@ -24,6 +24,31 @@ const loginSchema = Joi.object({
   })
 })
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Iniciar sesión
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Credenciales inválidas
+ *       400:
+ *         description: Datos de entrada inválidos
+ */
 // POST /api/auth/login - Iniciar sesión
 router.post('/login', async (req, res) => {
   try {
